@@ -1,0 +1,43 @@
+{
+  "name": "ncplayer",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "description": "",
+  "license": "MIT",
+  "author": {
+    "name": "Szymon Bretner",
+    "email": ""
+  },
+  "scripts": {
+    "test:tsc": "tsc --noEmit",
+    "prepare": "husky install",
+    "fix:fmt": "dprint fmt",
+    "test:fmt": "dprint check",
+    "build": "node ./scripts/build.mjs"
+  },
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@ncpa0cpl/nodepack": "^2.3.3",
+    "@types/bun": "latest",
+    "@types/lodash.throttle": "^4.1.9",
+    "dprint": "^0.45.1",
+    "esbuild": "^0.20.2",
+    "git-hook-tasks": "git+https://github.com/ncpa0cpl/git-hook-tasks#0.0.1",
+    "husky": "~8",
+    "lightningcss": "^1.24.1",
+    "typescript": "^5.4.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.15",
+    "lodash.throttle": "^4.1.1"
+  }
+}
