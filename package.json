@@ -1,27 +1,50 @@
 {
   "name": "ncplayer",
-  "version": "1.0.0",
-  "main": "./dist/index.js",
-  "keywords": [],
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/legacy/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "keywords": [
+    "player",
+    "video",
+    "audio",
+    "media"
+  ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/ncpa0/ncplayer?tab=readme-ov-file"
   },
-  "description": "",
+  "description": "A video player with support for preview on track hover.",
   "license": "MIT",
   "author": {
     "name": "Szymon Bretner",
-    "email": ""
+    "email": "szymonb21@gmail.com"
   },
   "scripts": {
     "test:tsc": "tsc --noEmit",
     "prepare": "husky install",
     "fix:fmt": "dprint fmt",
     "test:fmt": "dprint check",
-    "build": "node ./scripts/build.mjs"
+    "build": "node ./scripts/build.mjs",
+    "prepack": "bun run build"
   },
-  "module": "index.ts",
-  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "dependencies": {
+    "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.15",
+    "lodash.throttle": "^4.1.1"
+  },
   "devDependencies": {
     "@ncpa0cpl/nodepack": "^2.3.3",
     "@types/bun": "latest",
@@ -32,12 +55,5 @@
     "husky": "~8",
     "lightningcss": "^1.24.1",
     "typescript": "^5.4.5"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.15",
-    "lodash.throttle": "^4.1.1"
   }
 }
