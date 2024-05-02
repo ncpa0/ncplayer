@@ -3,6 +3,7 @@ import volumeMutedIcon from "../assets/volume-muted.svg";
 import volumeIcon from "../assets/volume.svg";
 import { Dismounter } from "../player.component";
 import { changeWithStep, clamp, toPrecision } from "../utilities/math";
+import { stopEvent } from "../utilities/stop-event";
 
 export type VolumeControlProps = {
   volume: ReadonlySignal<number>;
@@ -18,7 +19,7 @@ export function VolumeControl(props: VolumeControlProps) {
   });
 
   const thumbStyle = props.volume.derive((p) => {
-    return `left: calc(${clamp(p * 100, 0, 100)}% - 0.3em);`;
+    return `left: calc(${clamp(p * 100, 0, 100)}% - 0.75em);`;
   });
 
   let isPressed = false;
@@ -69,20 +70,28 @@ export function VolumeControl(props: VolumeControlProps) {
       class="volume-ctl-slider"
       draggable={false}
       onpointerdown={handlePointerDown}
+      onpointermove={stopEvent}
+      ondrag={stopEvent}
     >
       <div
         class="volume-ctl-slider-bg"
         draggable={false}
+        onpointermove={stopEvent}
+        ondrag={stopEvent}
       />
       <div
         class="volume-ctl-slider-progress"
         draggable={false}
         style={progressBarStyle}
+        onpointermove={stopEvent}
+        ondrag={stopEvent}
       />
       <div
         class="volume-ctl-slider-thumb"
         draggable={false}
         style={thumbStyle}
+        onpointermove={stopEvent}
+        ondrag={stopEvent}
       />
     </div>
   );

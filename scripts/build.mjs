@@ -38,11 +38,11 @@ async function main() {
       plugins: [CssMinifierPlugin()],
     },
     // Dev only:
-    // compileVendors: [
-    //   "@ncpa0cpl/vanilla-jsx",
-    //   "@ncpa0cpl/vanilla-jsx/jsx-runtime",
-    //   "lodash.throttle",
-    // ],
+    compileVendors: [
+      "@ncpa0cpl/vanilla-jsx",
+      "@ncpa0cpl/vanilla-jsx/jsx-runtime",
+      "lodash.throttle",
+    ],
   };
 
   await build(bldOptions);

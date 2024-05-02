@@ -4,6 +4,7 @@ import { Dismounter } from "../player.component";
 import { detectMobile } from "../utilities/detect-mobile";
 import { formatTime } from "../utilities/format-time";
 import { changeWithStep, clamp, toPrecision } from "../utilities/math";
+import { stopEvent } from "../utilities/stop-event";
 
 export type VideoTrackProps = {
   video: HTMLVideoElement;
@@ -29,7 +30,7 @@ export function VideoTrack(props: VideoTrackProps) {
   });
 
   const thumbStyle = props.progress.derive((p) => {
-    return `left: calc(${clamp(p * 100, 0, 100)}% - 0.3em);`;
+    return `left: calc(${clamp(p * 100, 0, 100)}% - 0.75em);`;
   });
 
   let isPressed = false;
@@ -190,15 +191,36 @@ export function VideoTrack(props: VideoTrackProps) {
       onmousemove={previewHandlers.derive((h) => h.handleMouseMove)}
       onmouseenter={previewHandlers.derive((h) => h.handleMouseEnter)}
       onmouseleave={previewHandlers.derive((h) => h.handleMouseLeave)}
+      onpointermove={stopEvent}
+      ondrag={stopEvent}
     >
-      <div class="track-bg" draggable={false} />
+      <div
+        class="track-bg"
+        draggable={false}
+        onpointermove={stopEvent}
+        ondrag={stopEvent}
+      />
       <div
         class="track-buffer-progress"
         draggable={false}
         style={bufferProgressBarStyle}
+        onpointermove={stopEvent}
+        ondrag={stopEvent}
       />
-      <div class="track-progress" draggable={false} style={progressBarStyle} />
-      <div class="track-thumb" draggable={false} style={thumbStyle} />
+      <div
+        class="track-progress"
+        draggable={false}
+        style={progressBarStyle}
+        onpointermove={stopEvent}
+        ondrag={stopEvent}
+      />
+      <div
+        class="track-thumb"
+        draggable={false}
+        style={thumbStyle}
+        onpointermove={stopEvent}
+        ondrag={stopEvent}
+      />
       {timePreview}
       {previewPlayer}
     </div>

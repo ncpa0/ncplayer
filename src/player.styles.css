@@ -77,9 +77,14 @@
             user-select: none;
             height: 1.8em;
             margin-left: .5em;
-            margin-right: 1.5em;
+            margin-right: .75em;
             padding-block: 6px;
             flex: 1;
+
+            &,
+            & * {
+                touch-action: none;
+            }
 
             & .track-bg {
                 position: absolute;
@@ -111,7 +116,7 @@
 
             & .track-thumb {
                 position: absolute;
-                top: calc(0.2em + 8px);
+                top: calc(calc(calc(1.8em + 12px) / 2) - .6em);
                 height: 1.5em;
                 width: 1.5em;
                 border-radius: 18px;
@@ -142,7 +147,8 @@
         & .time-display {
             font-size: 1.4em;
             color: white;
-            margin-right: .5em;
+            margin-right: .25em;
+            margin-left: .35em;
             font-family: sans-serif;
             user-select: none;
         }
@@ -151,9 +157,11 @@
             display: flex;
             align-items: center;
             margin-left: .5em;
-            margin-right: 1.5em;
+            margin-right: .75em;
 
             & .volume-ctl-icon {
+                margin-top: .1em;
+
                 & svg {
                     width: 1.6em;
                     height: 1.6em;
@@ -181,6 +189,7 @@
 
         & .volume-ctl-slider {
             width: 8em;
+            max-width: 10vw;
             min-height: 2em;
             border-radius: 6px;
             cursor: pointer;
@@ -189,7 +198,12 @@
             height: 1.8em;
             padding-block: 6px;
             flex: 1;
-            margin-left: .5em;
+            margin-left: 1em;
+
+            &,
+            & * {
+                touch-action: none;
+            }
 
             & .volume-ctl-slider-bg {
                 position: absolute;
@@ -212,7 +226,7 @@
 
             & .volume-ctl-slider-thumb {
                 position: absolute;
-                top: calc(0.2em + 8px);
+                top: calc(calc(calc(1.8em + 12px) / 2) - .6em);
                 height: 1.5em;
                 width: 1.5em;
                 border-radius: 18px;
