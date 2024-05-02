@@ -48,23 +48,22 @@
             outline: none;
             padding-inline: .5em;
             margin-bottom: .3em;
+            margin-inline: .25em;
 
-            & .ctl-btn-icon {
-                & svg {
-                    margin-top: 0.4em;
-                    height: 1.6em;
-                    width: 1.6em;
+            & svg {
+                margin-top: 0.4em;
+                height: 1.6em;
+                width: 1.6em;
 
-                    & path {
-                        fill: #ebebeb;
-                    }
+                & path {
+                    fill: #ebebeb;
                 }
             }
 
             &:hover {
                 cursor: pointer;
 
-                & .ctl-btn-icon svg path {
+                & svg path {
                     fill: #b8b8b8;
                 }
             }
@@ -92,6 +91,15 @@
                 background-color: color(srgb 0.352353 0.352353 0.352353);
             }
 
+            & .track-buffer-progress {
+                position: absolute;
+                top: calc(0.6em + 8px);
+                left: 0;
+                height: 0.6em;
+                border-radius: 18px;
+                background-color: rgba(255, 255, 255, 0.5);
+            }
+
             & .track-progress {
                 position: absolute;
                 top: calc(0.6em + 8px);
@@ -112,9 +120,22 @@
 
             & .preview-player {
                 position: absolute;
-                z-index: 1000;
-                bottom: 4em;
+                z-index: 999;
+                bottom: 3.5em;
                 display: none;
+                border-radius: 6px;
+            }
+
+            & .track-hover-time-preview {
+                position: absolute;
+                z-index: 1000;
+                bottom: 3.6em;
+                display: none;
+                font-family: sans-serif;
+                color: white;
+                background-color: rgba(0, 0, 0, 0.5);
+                padding: .25em .5em;
+                border-radius: 6px;
             }
         }
 
@@ -200,31 +221,6 @@
         }
 
         & .subtitle-selector-btn {
-            background-color: transparent;
-            border: none;
-            outline: none;
-            padding-inline: .5em;
-
-            & .subtitle-selector-icon {
-                & svg {
-                    margin-top: 0.4em;
-                    width: 1.6em;
-                    height: 1.6em;
-
-                    & path {
-                        fill: #ebebeb;
-                    }
-                }
-            }
-
-            &:hover {
-                cursor: pointer;
-
-                & .subtitle-selector-icon svg path {
-                    fill: #b8b8b8;
-                }
-            }
-
             & .subtitle-selector-popover {
                 position: absolute;
                 background-color: rgba(0, 0, 0, 0.5);
@@ -240,9 +236,14 @@
                     outline: unset;
                     color: white;
                     font-size: 1.6em;
-                    padding: .6em 0.8em;
+                    padding: .4em 0.8em;
+
+                    &.active {
+                        color: #5fb2ff;
+                    }
 
                     &:hover {
+                        cursor: pointer;
                         background-color: rgba(255, 255, 255, 0.12);
                         color: rgb(232, 232, 232);
                     }
@@ -271,5 +272,9 @@
             width: 100vw;
             height: calc(100vh - 4em);
         }
+    }
+
+    & .display-contents {
+        display: contents;
     }
 }

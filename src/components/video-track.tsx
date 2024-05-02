@@ -2,11 +2,13 @@ import { ReadonlySignal, sig, Signal } from "@ncpa0cpl/vanilla-jsx";
 import throttle from "lodash.throttle";
 import { Dismounter } from "../player.component";
 import { detectMobile } from "../utilities/detect-mobile";
+import { formatTime } from "../utilities/format-time";
 import { changeWithStep, clamp, toPrecision } from "../utilities/math";
 
 export type VideoTrackProps = {
   video: HTMLVideoElement;
   progress: Signal<number>;
+  bufferProgress: ReadonlySignal<number>;
   preview: ReadonlySignal<string | undefined>;
   previewWidth: ReadonlySignal<number | undefined>;
   previewHeight: ReadonlySignal<number | undefined>;
@@ -16,14 +18,17 @@ export type VideoTrackProps = {
 };
 
 export function VideoTrack(props: VideoTrackProps) {
-  const progress = props.progress;
   const previewUpdateThrottle = props.previewUpdateThrottle;
 
-  const progressBarStyle = progress.derive((p) => {
+  const bufferProgressBarStyle = props.bufferProgress.derive((p) => {
     return `right: ${clamp((1 - p) * 100, 0, 100)}%;`;
   });
 
-  const thumbStyle = progress.derive((p) => {
+  const progressBarStyle = props.progress.derive((p) => {
+    return `right: ${clamp((1 - p) * 100, 0, 100)}%;`;
+  });
+
+  const thumbStyle = props.progress.derive((p) => {
     return `left: calc(${clamp(p * 100, 0, 100)}% - 0.3em);`;
   });
 
@@ -88,19 +93,17 @@ export function VideoTrack(props: VideoTrackProps) {
     },
   );
 
+  const timePreview = (
+    <span class="track-hover-time-preview">
+      00:00
+    </span>
+  ) as HTMLSpanElement;
+
   const previewHandlers = sig.derive(
     previewPlayer,
     previewUpdateThrottle,
     (player, throttleTime = 250) => {
-      if (!player) {
-        return {
-          handleMouseEnter: undefined,
-          handleMouseLeave: undefined,
-          handleMouseMove: undefined,
-        };
-      }
-
-      const updatePreview = throttle(
+      const updatePreviews = throttle(
         (trackRect: DOMRect, clientX: number) => {
           const percent = (clientX - trackRect.left) / trackRect.width;
           const tmpValue = changeWithStep(
@@ -110,7 +113,10 @@ export function VideoTrack(props: VideoTrackProps) {
           ) * props.video.duration;
 
           if (Number.isFinite(tmpValue)) {
-            player.currentTime = tmpValue;
+            if (player) {
+              player!.currentTime = tmpValue;
+            }
+            timePreview.textContent = formatTime(tmpValue);
           }
         },
         throttleTime,
@@ -120,32 +126,43 @@ export function VideoTrack(props: VideoTrackProps) {
       let isOver = false;
       const handleMouseEnter = () => {
         isOver = true;
-        player.style.display = "initial";
+        timePreview.style.display = "initial";
+        if (player) {
+          player.style.display = "initial";
+        }
       };
 
       const handleMouseLeave = () => {
         isOver = false;
-        player.style.display = "none";
+        timePreview.style.display = "none";
+        if (player) {
+          player.style.display = "none";
+        }
       };
 
       const handleMouseMove = (e: MouseEvent) => {
         if (!isOver) return;
 
         const trackRect = vtrack.getBoundingClientRect();
-        const initPreviewRect = player.getBoundingClientRect();
-
         // get mouse position relative to the track element
         const mouseXRel = e.clientX
           - trackRect.left;
 
-        // clamp the left offset to prevent the preview from going offscreen
-        const minLeft = -1 * trackRect.left;
-        const maxLeft = window.innerWidth - initPreviewRect.width
-          - trackRect.left;
-        player.style.left =
-          clamp(mouseXRel - initPreviewRect.width / 2, minLeft, maxLeft) + "px";
+        const timePreviewRect = timePreview.getBoundingClientRect();
+        timePreview.style.left = mouseXRel - timePreviewRect.width / 2 + "px";
 
-        updatePreview(trackRect, e.clientX);
+        if (player) {
+          const initPreviewRect = player.getBoundingClientRect();
+          // clamp the left offset to prevent the preview from going offscreen
+          const minLeft = -1 * trackRect.left;
+          const maxLeft = window.innerWidth - initPreviewRect.width
+            - trackRect.left;
+          player.style.left =
+            clamp(mouseXRel - initPreviewRect.width / 2, minLeft, maxLeft)
+            + "px";
+        }
+
+        updatePreviews(trackRect, e.clientX);
       };
 
       return {
@@ -175,8 +192,14 @@ export function VideoTrack(props: VideoTrackProps) {
       onmouseleave={previewHandlers.derive((h) => h.handleMouseLeave)}
     >
       <div class="track-bg" draggable={false} />
+      <div
+        class="track-buffer-progress"
+        draggable={false}
+        style={bufferProgressBarStyle}
+      />
       <div class="track-progress" draggable={false} style={progressBarStyle} />
       <div class="track-thumb" draggable={false} style={thumbStyle} />
+      {timePreview}
       {previewPlayer}
     </div>
   );

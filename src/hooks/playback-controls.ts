@@ -9,6 +9,7 @@ export function usePlaybackControls(
       ? Number(localStorage.getItem("ncplayer-volume") ?? 1)
       : 1,
   );
+  const bufferProgress = sig(0);
   const progress = sig(0);
   const isPLaying = sig(false);
   const showControls = sig(true);
@@ -50,10 +51,30 @@ export function usePlaybackControls(
     showControls.dispatch(true);
   };
 
-  const handleProgress = (e: Event) => {
+  const handleTimeUpdate = (e: Event) => {
     const elem = e.target as HTMLVideoElement;
     if (elem.duration) {
       progress.dispatch(elem.currentTime / elem.duration);
+    }
+  };
+
+  const handleProgress = (e: Event) => {
+    const elem = e.target as HTMLVideoElement;
+    if (elem.buffered.length > 0 && !Number.isNaN(elem.duration)) {
+      // find buffered range that's closest to the current time
+      let buffered = 0;
+      for (let i = 0; i < elem.buffered.length; i++) {
+        const buffStart = elem.buffered.start(i);
+        const buffEnd = elem.buffered.end(i);
+        if (
+          (buffStart - 16) <= elem.currentTime
+          && elem.currentTime <= buffEnd
+        ) {
+          buffered = buffEnd;
+          break;
+        }
+      }
+      bufferProgress.dispatch(buffered / elem.duration);
     }
   };
 
@@ -75,13 +96,15 @@ export function usePlaybackControls(
     isPLaying,
     showControls,
     volume,
+    bufferProgress,
     handle: {
       mouseMove: handleMouseMove,
       mouseLeave: handleMouseLeave,
       play: handlePlay,
       pause: handlePause,
-      progress: handleProgress,
+      timeUpdate: handleTimeUpdate,
       volumeChange: handleVolumeChange,
+      progress: handleProgress,
     },
   };
 }

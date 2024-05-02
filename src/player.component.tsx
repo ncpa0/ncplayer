@@ -9,9 +9,7 @@ import { VideoTrack } from "./components/video-track";
 import { VolumeControl } from "./components/volume-control";
 import { useFullscreenController } from "./hooks/fullscreen-controller";
 import { usePlaybackControls } from "./hooks/playback-controls";
-import { useSubtrackController } from "./hooks/subtrack-controller";
-import styles from "./player.styles.css";
-import { mountStylesheet } from "./utilities/mount-stylesheet";
+import defaultStylesheet from "./player.styles.css";
 import { signalize } from "./utilities/signalize";
 
 export type MaybeSignal<T> = T | Signal<T>;
@@ -101,6 +99,14 @@ export type PlayerProps = {
    */
   persistentVolume?: MaybeSignal<boolean | undefined>;
   /**
+   * When set to `false`, no styles will be added to the DOM, resulting
+   * in the unstyled player. (you will need to add styles yourself)
+   *
+   * When given a string, that string will be inserted into the DOM as a
+   * style tag instead of the default styles.
+   */
+  styles?: MaybeSignal<string | false | undefined>;
+  /**
    * An interface that should expose a `ondismount` method that registers
    * a listener. NCPlayer will register teardown callbacks to this interface.
    */
@@ -110,6 +116,7 @@ export type PlayerProps = {
 export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
   const props = signalize(rawProps);
   const {
+    styles,
     sources,
     subtitles,
     controlsTimeout,
@@ -117,11 +124,15 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
     previewUpdateThrottle,
     persistentVolume,
   } = props;
-  const stylesheet = mountStylesheet(styles);
-  dismounter?.ondismount(() => stylesheet.remove());
 
-  const { isPLaying, progress, showControls, volume, handle } =
-    usePlaybackControls(controlsTimeout, persistentVolume);
+  const {
+    isPLaying,
+    progress,
+    bufferProgress,
+    showControls,
+    volume,
+    handle,
+  } = usePlaybackControls(controlsTimeout, persistentVolume);
 
   const { isFullscreen, handleFullscreenBtnClick } = useFullscreenController(
     () => ncplayerElem,
@@ -134,7 +145,8 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
       controls={false}
       onplay={handle.play}
       onpause={handle.pause}
-      ontimeupdate={handle.progress}
+      ontimeupdate={handle.timeUpdate}
+      onprogress={handle.progress}
       autoplay={props.autoplay}
       muted={props.muted}
       poster={props.poster}
@@ -160,12 +172,6 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
     </video>
   ) as HTMLVideoElement;
 
-  const { handleSubTrackSelect } = useSubtrackController(
-    videoElem,
-    showControls,
-    dismounter,
-  );
-
   const ncplayerElem = (
     <div
       class={{
@@ -176,6 +182,13 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
       onmousemove={handle.mouseMove}
       onmouseleave={handle.mouseLeave}
     >
+      {styles.derive(s => {
+        if (s === false) return <></>;
+        if (typeof s === "string") {
+          return <style>{s}</style>;
+        }
+        return <style>{defaultStylesheet}</style>;
+      })}
       {videoElem}
       <div
         class="event-capturer"
@@ -201,6 +214,7 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
         <VideoTrack
           video={videoElem}
           progress={progress}
+          bufferProgress={bufferProgress}
           preview={preview}
           previewWidth={props.previewWidth}
           previewHeight={props.previewHeight}
@@ -227,7 +241,8 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
         />
         <SubtitleSelect
           subtitles={subtitles}
-          onselect={handleSubTrackSelect}
+          showControls={showControls}
+          videoElem={videoElem}
           dismounter={dismounter}
         />
         <FullscreenButton

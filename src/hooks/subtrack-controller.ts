@@ -1,4 +1,4 @@
-import { Signal } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
 import { Dismounter, SubtitleTrack } from "../player.component";
 import { countChar } from "../utilities/count-char";
 
@@ -12,15 +12,28 @@ function liftCue(cue: VTTCue) {
   }
 }
 
+function resetCues(cuesList?: TextTrackCueList | null) {
+  const cues = [...(cuesList ?? [])] as VTTCue[];
+  for (let i = 0; i < cues.length; i++) {
+    const cue = cues[i]!;
+    if (cue.line !== "auto") {
+      cue.line = "auto";
+    }
+  }
+}
+
 export function useSubtrackController(
   videoElem: HTMLVideoElement,
-  showControls: Signal<boolean>,
+  showControls: ReadonlySignal<boolean>,
   dismounter?: Dismounter,
 ) {
+  const activeTrack = sig<null | string>(null);
+
   const handleSubTrackSelect = (track: SubtitleTrack) => {
     for (const trackElem of videoElem.textTracks) {
       if (trackElem.id === track.id) {
         trackElem.mode = "showing";
+        activeTrack.dispatch(track.id);
 
         // cue line changes are iffy, won't take effect if set before displaying
         // so we need to wait a bit
@@ -34,6 +47,16 @@ export function useSubtrackController(
         trackElem.mode = "hidden";
       }
       trackElem.cues;
+    }
+  };
+
+  const handleSubTrackDisable = () => {
+    for (const trackElem of videoElem.textTracks) {
+      if (trackElem.mode === "showing") {
+        trackElem.mode = "hidden";
+        resetCues(trackElem.cues);
+        activeTrack.dispatch(null);
+      }
     }
   };
 
@@ -62,13 +85,7 @@ export function useSubtrackController(
     } else {
       for (const trackElem of videoElem.textTracks) {
         if (trackElem.mode !== "showing") continue;
-
-        const cues = [...(trackElem.activeCues ?? [])] as VTTCue[];
-        for (const cue of cues) {
-          if (cue.line !== "auto") {
-            cue.line = "auto";
-          }
-        }
+        resetCues(trackElem.cues);
       }
     }
   });
@@ -79,6 +96,8 @@ export function useSubtrackController(
   });
 
   return {
+    activeTrack,
     handleSubTrackSelect,
+    handleSubTrackDisable,
   };
 }

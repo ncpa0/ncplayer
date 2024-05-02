@@ -1,4 +1,5 @@
 import { sig, Signal } from "@ncpa0cpl/vanilla-jsx";
+import { formatTime } from "../utilities/format-time";
 
 export type TimeDisplayProps = {
   progress: Signal<number>;
@@ -17,24 +18,9 @@ export function TimeDisplay(props: TimeDisplayProps) {
       }
 
       const currentTime = props.videoElement.currentTime;
-
-      const hours = Math.floor(currentTime / 3600);
-      const minutes = Math.floor((currentTime % 3600) / 60);
-      const seconds = Math.floor(currentTime % 60);
-
-      if (hours > 0) {
-        const newTime = `${hours.toString().padStart(2, "0")}:${
-          minutes.toString().padStart(2, "0")
-        }:${seconds.toString().padStart(2, "0")}`;
-        lastTime = newTime;
-        return newTime;
-      } else {
-        const newTime = `${minutes.toString().toString().padStart(2, "0")}:${
-          seconds.toString().padStart(2, "0")
-        }`;
-        lastTime = newTime;
-        return newTime;
-      }
+      const timeFmt = formatTime(currentTime);
+      lastTime = timeFmt;
+      return timeFmt;
     },
   );
 

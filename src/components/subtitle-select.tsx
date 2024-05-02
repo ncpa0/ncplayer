@@ -1,10 +1,12 @@
 import { Range, ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
 import subtitleIcon from "../assets/subtitles.svg";
+import { useSubtrackController } from "../hooks/subtrack-controller";
 import { Dismounter, SubtitleTrack } from "../player.component";
 
 export type SubtitleSelectProps = {
   subtitles: ReadonlySignal<Array<SubtitleTrack> | undefined>;
-  onselect(track: SubtitleTrack): void;
+  showControls: ReadonlySignal<boolean>;
+  videoElem: HTMLVideoElement;
   dismounter?: Dismounter;
 };
 
@@ -13,12 +15,15 @@ export function SubtitleSelect(
 ) {
   const popoverVisible = sig(false);
 
+  const { activeTrack, handleSubTrackSelect, handleSubTrackDisable } =
+    useSubtrackController(
+      props.videoElem,
+      props.showControls,
+      props.dismounter,
+    );
+
   const handlePress = () => {
     popoverVisible.dispatch(v => !v);
-  };
-
-  const handleSelect = (track: SubtitleTrack) => {
-    props.onselect(track);
   };
 
   const onDocumentClick = (e: MouseEvent) => {
@@ -43,19 +48,33 @@ export function SubtitleSelect(
   });
 
   const popover = (
-    <Range
-      into={<div class="subtitle-selector-popover" />}
-      data={props.subtitles.derive(t => t ?? [])}
-    >
-      {t => (
-        <button
-          class="subtitle-selector-item"
-          onclick={() => handleSelect(t)}
-        >
-          {t.label}
-        </button>
-      )}
-    </Range>
+    <div class="subtitle-selector-popover">
+      <Range
+        into={<div class="display-contents" />}
+        data={props.subtitles.derive(t => t ?? [])}
+      >
+        {t => (
+          <button
+            class={{
+              "subtitle-selector-item": true,
+              "active": activeTrack.derive(at => at === t.id),
+            }}
+            onclick={() => handleSubTrackSelect(t)}
+          >
+            {t.label}
+          </button>
+        )}
+      </Range>
+      <button
+        class={{
+          "subtitle-selector-item": true,
+          "active": activeTrack.derive(at => at === null),
+        }}
+        onclick={handleSubTrackDisable}
+      >
+        None
+      </button>
+    </div>
   );
 
   return (
