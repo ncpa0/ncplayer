@@ -107,6 +107,11 @@ export type PlayerProps = {
    */
   styles?: MaybeSignal<string | false | undefined>;
   /**
+   * Maximum time range (in ms) it's possible to seek forward or backward by
+   * swiping on a mobile device.
+   */
+  swipeControlRange?: MaybeSignal<number | undefined>;
+  /**
    * An interface that should expose a `ondismount` method that registers
    * a listener. NCPlayer will register teardown callbacks to this interface.
    */
@@ -123,6 +128,7 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
     preview,
     previewUpdateThrottle,
     persistentVolume,
+    swipeControlRange,
   } = props;
 
   const {
@@ -132,7 +138,13 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
     showControls,
     volume,
     handle,
-  } = usePlaybackControls(controlsTimeout, persistentVolume);
+    capturer,
+  } = usePlaybackControls(
+    () => videoElem,
+    controlsTimeout,
+    persistentVolume,
+    swipeControlRange,
+  );
 
   const { isFullscreen, handleFullscreenBtnClick } = useFullscreenController(
     () => ncplayerElem,
@@ -192,13 +204,12 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
       {videoElem}
       <div
         class="event-capturer"
-        onclick={() => {
-          if (videoElem.paused) {
-            videoElem.play();
-          } else {
-            videoElem.pause();
-          }
-        }}
+        draggable={false}
+        ontouchstart={capturer.touchstart}
+        ontouchmove={capturer.touchmove}
+        ontouchend={capturer.touchend}
+        ontouchcancel={capturer.touchend}
+        onpointerup={capturer.pointerUp}
       />
       <div
         class={{
