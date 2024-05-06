@@ -33,7 +33,9 @@
     "fix:fmt": "dprint fmt",
     "test:fmt": "dprint check",
     "build": "node ./scripts/build.mjs",
-    "prepack": "bun run build"
+    "prepack": "bun run build",
+    "servedev": "goserve --aw ./",
+    "watch": "bun run build --dev --watch && bun run servedev"
   },
   "files": [
     "dist",
@@ -46,6 +48,7 @@
     "lodash.throttle": "^4.1.1"
   },
   "devDependencies": {
+    "@ncpa0cpl/goserve": "^1.0.1",
     "@ncpa0cpl/nodepack": "^2.3.3",
     "@types/bun": "latest",
     "@types/lodash.throttle": "^4.1.9",
