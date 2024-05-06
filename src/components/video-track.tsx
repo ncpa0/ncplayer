@@ -166,6 +166,14 @@ export function VideoTrack(props: VideoTrackProps) {
         updatePreviews(trackRect, e.clientX);
       };
 
+      const handlePreviewMouseover = () => {
+        handleMouseLeave();
+      };
+
+      if (player) {
+        player.onmouseenter = handlePreviewMouseover;
+      }
+
       return {
         handleMouseEnter,
         handleMouseLeave,
