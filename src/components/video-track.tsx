@@ -114,7 +114,7 @@ export function VideoTrack(props: VideoTrackProps) {
           ) * props.video.duration;
 
           if (Number.isFinite(tmpValue)) {
-            if (player) {
+            if (player && Math.abs(player.currentTime - tmpValue) > 1.1) {
               player!.currentTime = tmpValue;
             }
             timePreview.textContent = formatTime(tmpValue);
