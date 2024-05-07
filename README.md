@@ -28,6 +28,10 @@ function changeSource() {
 }
 ```
 
+### UI Elements size
+
+The size of all UI elements of the NCPlayer can be controlled by setting the CSS `font-size` of the root element (`.ncplayer`). Font size however does not affect the width or height of the player itself. To control the dimensions of the player doing so via either the `width` and `height` props or CSS rules on the inner `<video>` tag is recommended (ex. `.ncplayer video.main-player { width: 16em; }`.)
+
 ### Properties
 
 All properties, except for `dismounter`, can be provided to the NCPlayer as either a value of the supported type, or a signal containing a value of that same type. (ex. `width` can be either a `number` or a `Signal<number>`)
