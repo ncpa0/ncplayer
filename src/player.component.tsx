@@ -1,4 +1,4 @@
-import { sig, Signal } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
 import { FullscreenButton } from "./components/fullscreen-button";
 import { VideoSources } from "./components/sources";
 import { StartButton } from "./components/start-button";
@@ -11,8 +11,9 @@ import { useFullscreenController } from "./hooks/fullscreen-controller";
 import { usePlaybackControls } from "./hooks/playback-controls";
 import defaultStylesheet from "./player.styles.css";
 import { signalize } from "./utilities/signalize";
+import { stopEvent } from "./utilities/stop-event";
 
-export type MaybeSignal<T> = T | Signal<T>;
+export type MaybeSignal<T> = T | ReadonlySignal<T>;
 
 export type VideoSource = {
   src: string;
@@ -210,6 +211,7 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
         ontouchend={capturer.touchend}
         ontouchcancel={capturer.touchend}
         onpointerup={capturer.pointerUp}
+        oncontextmenu={stopEvent}
       />
       <div
         class={{

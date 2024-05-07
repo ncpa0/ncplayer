@@ -8,21 +8,16 @@ export type VideoTracksProps = {
 export function VideoSubTracks(props: VideoTracksProps) {
   return props.subtitles.derive((s) => {
     if (Array.isArray(s)) {
-      return (
-        <>
-          {s.map((t) => (
-            <track
-              id={t.id}
-              src={t.src}
-              srclang={t.srclang}
-              label={t.label}
-              default={t.default}
-              kind="subtitles"
-            >
-            </track>
-          ))}
-        </>
-      );
+      return s.map((t) => (
+        <track
+          id={t.id}
+          src={t.src}
+          srclang={t.srclang}
+          label={t.label}
+          default={t.default}
+          kind="subtitles"
+        />
+      ));
     }
 
     return null;

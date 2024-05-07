@@ -173,6 +173,7 @@ export function VideoTrack(props: VideoTrackProps) {
       if (player) {
         player.onmouseenter = handlePreviewMouseover;
       }
+      timePreview.onmouseenter = handlePreviewMouseover;
 
       return {
         handleMouseEnter,

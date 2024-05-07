@@ -1,4 +1,4 @@
-import { ReadonlySignal, sig, Signal, VSignal } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal, sig, VSignal } from "@ncpa0cpl/vanilla-jsx";
 import { MaybeSignal } from "../player.component";
 
 type Rewrap<O> = O extends infer U ? {
@@ -8,17 +8,18 @@ type Rewrap<O> = O extends infer U ? {
 
 type TypeOfMaybeSignal<M extends MaybeSignal<any>> = Extract<
   M,
-  Signal<any>
-> extends Signal<any> ? ReturnType<
+  ReadonlySignal<any>
+> extends ReadonlySignal<any> ? ReturnType<
     Extract<
       M,
-      Signal<any>
+      ReadonlySignal<any>
     >["current"]
   >
   : never;
 
 export type Designalized<O extends object> = {
-  [K in keyof O]: Signal<any> extends O[K] ? TypeOfMaybeSignal<O[K]> : O[K];
+  [K in keyof O]: ReadonlySignal<any> extends O[K] ? TypeOfMaybeSignal<O[K]>
+    : O[K];
 };
 
 type _Signalized<O extends object> = {

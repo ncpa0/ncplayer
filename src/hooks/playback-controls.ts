@@ -2,17 +2,25 @@ import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
 import throttle from "lodash.throttle";
 import { clamp } from "../utilities/math";
 
+function getInitVolume(
+  persistentVolume: ReadonlySignal<boolean | undefined>,
+) {
+  if (persistentVolume.current()) {
+    const stored = localStorage.getItem("ncplayer-volume");
+    if (stored) {
+      return Number(stored);
+    }
+  }
+  return 1;
+}
+
 export function usePlaybackControls(
   getElem: () => HTMLVideoElement,
   controlsTimeout: ReadonlySignal<number | undefined>,
   persistentVolume: ReadonlySignal<boolean | undefined>,
   swipeControlRange: ReadonlySignal<number | undefined>,
 ) {
-  const volume = sig(
-    persistentVolume.current()
-      ? Number(localStorage.getItem("ncplayer-volume") ?? 1)
-      : 1,
-  );
+  const volume = sig(getInitVolume(persistentVolume));
   const bufferProgress = sig(0);
   const progress = sig(0);
   const isPLaying = sig(false);
@@ -110,11 +118,14 @@ export function usePlaybackControls(
   let swipeStartTs = 0;
   let isSwiping = false;
   let initX = 0;
-  const handleCapturePointerUp = (e: MouseEvent) => {
+  const handleCapturePointerUp = (e: PointerEvent) => {
     if (isSwiping) {
       return;
     }
-    togglePlay();
+    const isRmb = e.button === 2;
+    if (!isRmb) {
+      togglePlay();
+    }
   };
 
   const handleCaptureTouchStart = (e: TouchEvent) => {

@@ -8,7 +8,7 @@ export type VideoSourceProps = {
 export function VideoSources(props: VideoSourceProps) {
   return props.sources.derive((s) => {
     if (Array.isArray(s)) {
-      return s.map((t) => <source src={t.src} type={t.type}></source>);
+      return s.map((t) => <source src={t.src} type={t.type} />);
     }
     return null;
   });
