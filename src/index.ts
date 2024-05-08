@@ -7,3 +7,4 @@ export {
   type SubtitleTrack,
   type VideoSource,
 } from "./player.component";
+export { register } from "./web-component";

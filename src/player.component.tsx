@@ -68,7 +68,8 @@ export type PlayerProps = {
    */
   sources?:
     | MaybeSignal<string | undefined>
-    | MaybeSignal<Array<VideoSource> | undefined>;
+    | MaybeSignal<Array<VideoSource> | undefined>
+    | MaybeSignal<string | Array<VideoSource> | undefined>;
   /**
    * Array of subtitle tracks to allow user to select.
    */
@@ -106,7 +107,7 @@ export type PlayerProps = {
    * When given a string, that string will be inserted into the DOM as a
    * style tag instead of the default styles.
    */
-  styles?: MaybeSignal<string | false | undefined>;
+  styles?: MaybeSignal<string | boolean | undefined>;
   /**
    * Maximum time range (in ms) it's possible to seek forward or backward by
    * swiping on a mobile device.

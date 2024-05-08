@@ -22,8 +22,9 @@ export function SubtitleSelect(
       props.dismounter,
     );
 
-  const handlePress = () => {
+  const handlePress = (e: MouseEvent) => {
     popoverVisible.dispatch(v => !v);
+    e.stopPropagation();
   };
 
   const onDocumentClick = (e: MouseEvent) => {

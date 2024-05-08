@@ -69,25 +69,31 @@ export function VideoTrack(props: VideoTrackProps) {
     }
   };
 
-  let previewPlayer = sig.derive(
-    props.preview,
-    props.previewWidth,
-    props.previewHeight,
-    (preview, width, height) => {
+  let previewPlayer = props.preview.derive(
+    (preview) => {
       // also disable preview on mobile devices
       if (!preview || detectMobile()) return;
 
-      if (!width && !height) {
-        width = 320;
-      }
+      const dim = sig.derive(
+        props.previewWidth,
+        props.previewHeight,
+        (width, height) => {
+          if (!width && !height) {
+            return { width: 320, height: undefined };
+          }
+
+          return { width, height };
+        },
+      );
 
       return (
         <video
           class="preview-player"
-          width={width}
-          height={height}
+          width={dim.derive(d => d.width)}
+          height={dim.derive(d => d.height)}
           src={preview}
           controls={false}
+          preload={"metadata"}
           muted
         />
       ) as HTMLVideoElement;

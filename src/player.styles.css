@@ -1,6 +1,7 @@
 .ncplayer {
     position: relative;
     width: fit-content;
+    background-color: black;
 
     & * {
         font-size: inherit;
@@ -129,6 +130,7 @@
                 bottom: 3.5em;
                 display: none;
                 border-radius: 6px;
+                background-color: black;
             }
 
             & .track-hover-time-preview {
