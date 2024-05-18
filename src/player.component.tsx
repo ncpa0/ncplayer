@@ -1,4 +1,4 @@
-import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
+import { sig } from "@ncpa0cpl/vanilla-jsx";
 import { FullscreenButton } from "./components/fullscreen-button";
 import { VideoSources } from "./components/sources";
 import { StartButton } from "./components/start-button";
@@ -10,6 +10,7 @@ import { VolumeControl } from "./components/volume-control";
 import { useFullscreenController } from "./hooks/fullscreen-controller";
 import { usePlaybackControls } from "./hooks/playback-controls";
 import defaultStylesheet from "./player.styles.css";
+import type { ReadonlySignal } from "./signal.types";
 import { signalize } from "./utilities/signalize";
 import { stopEvent } from "./utilities/stop-event";
 

@@ -13,7 +13,8 @@ const watch = process.argv.includes("--watch");
 
 async function removeJsxteTypeImports() {
   const ops = [];
-  const regx = /import\s+\{[^}]+\}\s+from\s+['"]jsxte['"];/g;
+  const regx =
+    /import(?:\s+type){0,1}\s*\{[^}]+\}\s*from\s*['"]jsxte['"];{0,1}/g;
 
   for await (const [root, _, files] of walk(p("dist/types"))) {
     for (const f of files) {

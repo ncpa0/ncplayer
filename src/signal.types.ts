@@ -103,6 +103,6 @@ declare function derive<E, F, G, H, I, J, U>(
   getDerivedValue: (v1: E, v2: F, v3: G, v4: H, v5: I, v6: J) => U,
 ): ReadonlySignal<U>;
 
-declare function sig<T>(value: T): Signal<T>;
+declare const sig: SignalConstructor;
 
-export type { sig };
+export { sig };
