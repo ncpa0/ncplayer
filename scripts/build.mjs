@@ -1,6 +1,7 @@
 import { build } from "@ncpa0cpl/nodepack";
 import fs from "fs/promises";
 import { transform } from "lightningcss";
+import { walk } from "node-os-walk";
 import path from "node:path";
 import { fileURLToPath } from "url";
 
@@ -9,6 +10,39 @@ const p = (...fpath) => path.resolve(__dirname, "..", ...fpath);
 
 const isDev = process.argv.includes("--dev");
 const watch = process.argv.includes("--watch");
+
+async function removeJsxteTypeImports() {
+  const ops = [];
+  const regx = /import\s+\{[^}]+\}\s+from\s+['"]jsxte['"];/g;
+
+  for await (const [root, _, files] of walk(p("dist/types"))) {
+    for (const f of files) {
+      if (f.name.endsWith(".d.ts")) {
+        const filepath = path.join(root, f.name);
+        ops.push(
+          fs.readFile(filepath, "utf-8").then((fileData) => {
+            if (regx.test(fileData)) {
+              const newData = fileData.replace(regx, "").trimStart();
+              return fs.writeFile(filepath, newData);
+            }
+          }),
+        );
+      }
+    }
+  }
+
+  return Promise.all(ops);
+}
+
+function onBundleBuildComplete() {
+  fs.rename(
+    p("dist/bundle/esm/index.mjs"),
+    p("dist/bundle/index.js"),
+  );
+  fs.rm(p("dist/bundle/esm"), {
+    recursive: true,
+  }).catch(() => {});
+}
 
 async function main() {
   /**
@@ -28,7 +62,6 @@ async function main() {
       ".svg": "%FORMAT%",
     },
     esbuildOptions: {
-      minify: !isDev,
       sourcemap: isDev ? "inline" : false,
       jsxImportSource: "@ncpa0cpl/vanilla-jsx",
       loader: {
@@ -38,14 +71,32 @@ async function main() {
       plugins: [CssMinifierPlugin()],
     },
     // Dev only:
-    compileVendors: [
-      "@ncpa0cpl/vanilla-jsx",
-      "@ncpa0cpl/vanilla-jsx/jsx-runtime",
-      "lodash.throttle",
-    ],
+    // compileVendors: [
+    //   "@ncpa0cpl/vanilla-jsx",
+    //   "@ncpa0cpl/vanilla-jsx/jsx-runtime",
+    //   "lodash.throttle",
+    // ],
   };
 
-  await build(bldOptions);
+  /** @type {import("@ncpa0cpl/nodepack").BuildConfig} */
+  const bundleOptions = {
+    ...bldOptions,
+    formats: ["esm"],
+    declarations: false,
+    entrypoint: p("src/index.js"),
+    bundle: true,
+    outDir: p("dist/bundle"),
+    onBuildComplete: onBundleBuildComplete,
+  };
+
+  const buildBase = () => build(bldOptions);
+  const buildBundle = () =>
+    build(bundleOptions).then(() => onBundleBuildComplete());
+
+  await Promise.all([buildBase(), buildBundle()]);
+  await removeJsxteTypeImports();
+
+  await fs.cp(p("src/index.d.ts"), p("dist/types/index.d.ts"));
 }
 
 /**

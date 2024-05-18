@@ -1,4 +1,3 @@
-export { sig, type Signal } from "@ncpa0cpl/vanilla-jsx";
 export {
   type Dismounter,
   type MaybeSignal,
@@ -7,4 +6,5 @@ export {
   type SubtitleTrack,
   type VideoSource,
 } from "./player.component";
+export { sig, type Signal } from "./signal.types";
 export { register } from "./web-component";
