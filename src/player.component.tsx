@@ -16,6 +16,7 @@ import { stopEvent } from "./utilities/stop-event";
 export type MaybeSignal<T> = T | ReadonlySignal<T>;
 
 export type VideoSource = {
+  id?: string;
   src: string;
   type: string;
   label: string;

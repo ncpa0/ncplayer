@@ -1,5 +1,6 @@
 import { sig } from "@ncpa0cpl/vanilla-jsx";
 import { NCPlayer, SubtitleTrack, VideoSource } from "./player.component";
+import { replace } from "./utilities/repalce";
 
 class NCPlayerWebComponent extends HTMLElement {
   static get observedAttributes() {
@@ -16,9 +17,7 @@ class NCPlayerWebComponent extends HTMLElement {
       "preview-height",
       "preview-update-throttle",
       "preview-width",
-      "sources",
       "styles",
-      "subtitles",
       "swipe-control-range",
       "width",
     ] as const;
@@ -40,145 +39,191 @@ class NCPlayerWebComponent extends HTMLElement {
     styles: sig<string | boolean | undefined>(undefined),
     swipeControlRange: sig<number | undefined>(undefined),
     width: sig<number | undefined>(undefined),
-    sources: sig<string | VideoSource[] | undefined>(undefined),
-    subtitles: sig<SubtitleTrack[] | undefined>(undefined),
+    sources: sig<string | Partial<VideoSource>[] | undefined>(undefined),
+    subtitles: sig<Partial<SubtitleTrack>[] | undefined>(undefined),
+    defaultSub: sig<string | undefined>(undefined),
   };
 
   get autoplay() {
     return this.__signals.autoplay.current();
   }
   set autoplay(value: boolean | undefined) {
-    this.validateBoolean("autoplay", value);
-    this.__signals.autoplay.dispatch(value);
+    if (this.__signals.autoplay.current() !== value) {
+      this.validateBoolean("autoplay", value);
+      this.__signals.autoplay.dispatch(value);
+      this.onPropertySet("autoplay", value);
+    }
   }
 
   get controlsTimeout() {
     return this.__signals.controlsTimeout.current();
   }
   set controlsTimeout(value: number | undefined) {
-    this.validateNumber("controls-timeout", value);
-    this.__signals.controlsTimeout.dispatch(value);
+    if (this.__signals.controlsTimeout.current() !== value) {
+      this.validateNumber("controls-timeout", value);
+      this.__signals.controlsTimeout.dispatch(value);
+      this.onPropertySet("controls-timeout", value);
+    }
   }
 
   get height() {
     return this.__signals.height.current();
   }
   set height(value: number | undefined) {
-    this.validateNumber("height", value);
-    this.__signals.height.dispatch(value);
+    if (this.__signals.height.current() !== value) {
+      this.validateNumber("height", value);
+      this.__signals.height.dispatch(value);
+      this.onPropertySet("height", value);
+    }
   }
 
   get loop() {
     return this.__signals.loop.current();
   }
   set loop(value: boolean | undefined) {
-    this.validateBoolean("loop", value);
-    this.__signals.loop.dispatch(value);
+    if (this.__signals.loop.current() !== value) {
+      this.validateBoolean("loop", value);
+      this.__signals.loop.dispatch(value);
+      this.onPropertySet("loop", value);
+    }
   }
 
   get muted() {
     return this.__signals.muted.current();
   }
   set muted(value: boolean | undefined) {
-    this.validateBoolean("muted", value);
-    this.__signals.muted.dispatch(value);
+    if (this.__signals.muted.current() !== value) {
+      this.validateBoolean("muted", value);
+      this.__signals.muted.dispatch(value);
+      this.onPropertySet("muted", value);
+    }
   }
 
   get persistentVolume() {
     return this.__signals.persistentVolume.current();
   }
   set persistentVolume(value: boolean | undefined) {
-    this.validateBoolean("persistent-volume", value);
-    this.__signals.persistentVolume.dispatch(value);
+    if (this.__signals.persistentVolume.current() !== value) {
+      this.validateBoolean("persistent-volume", value);
+      this.__signals.persistentVolume.dispatch(value);
+      this.onPropertySet("persistent-volume", value);
+    }
   }
 
   get poster() {
     return this.__signals.poster.current();
   }
   set poster(value: string | undefined) {
-    this.validateString("poster", value);
-    this.__signals.poster.dispatch(value);
+    if (this.__signals.poster.current() !== value) {
+      this.validateString("poster", value);
+      this.__signals.poster.dispatch(value);
+      this.onPropertySet("poster", value);
+    }
   }
 
   get preload() {
     return this.__signals.preload.current();
   }
   set preload(value: HTMLMediaElement["preload"] | undefined) {
-    this.validateString("preload", value);
-    this.__signals.preload.dispatch(value);
+    if (this.__signals.preload.current() !== value) {
+      this.validateString("preload", value);
+      this.__signals.preload.dispatch(value);
+      this.onPropertySet("preload", value);
+    }
   }
 
   get preview() {
     return this.__signals.preview.current();
   }
   set preview(value: string | undefined) {
-    this.validateString("preview", value);
-    this.__signals.preview.dispatch(value);
+    if (this.__signals.preview.current() !== value) {
+      this.validateString("preview", value);
+      this.__signals.preview.dispatch(value);
+      this.onPropertySet("preview", value);
+    }
   }
 
   get previewHeight() {
     return this.__signals.previewHeight.current();
   }
   set previewHeight(value: number | undefined) {
-    this.validateNumber("preview-height", value);
-    this.__signals.previewHeight.dispatch(value);
+    if (this.__signals.previewHeight.current() !== value) {
+      this.validateNumber("preview-height", value);
+      this.__signals.previewHeight.dispatch(value);
+      this.onPropertySet("preview-height", value);
+    }
   }
 
   get previewUpdateThrottle() {
     return this.__signals.previewUpdateThrottle.current();
   }
   set previewUpdateThrottle(value: number | undefined) {
-    this.validateNumber("preview-update-throttle", value);
-    this.__signals.previewUpdateThrottle.dispatch(value);
+    if (this.__signals.previewUpdateThrottle.current() === value) {
+      this.validateNumber("preview-update-throttle", value);
+      this.__signals.previewUpdateThrottle.dispatch(value);
+      this.onPropertySet("preview-update-throttle", value);
+    }
   }
 
   get previewWidth() {
     return this.__signals.previewWidth.current();
   }
   set previewWidth(value: number | undefined) {
-    this.validateNumber("preview-width", value);
-    this.__signals.previewWidth.dispatch(value);
+    if (this.__signals.previewWidth.current() !== value) {
+      this.validateNumber("preview-width", value);
+      this.__signals.previewWidth.dispatch(value);
+      this.onPropertySet("preview-width", value);
+    }
   }
 
   get styles() {
     return this.__signals.styles.current();
   }
   set styles(value: string | boolean | undefined) {
-    if (typeof value !== "string" && typeof value !== "boolean") {
-      throw new Error(
-        `Attribute "styles" must be either a string or a boolean`,
-      );
+    if (this.__signals.styles.current() !== value) {
+      if (typeof value !== "string" && typeof value !== "boolean") {
+        throw new Error(
+          `Attribute "styles" must be either a string or a boolean`,
+        );
+      }
+      this.__signals.styles.dispatch(value);
+      this.onPropertySet("styles", value);
     }
-    this.__signals.styles.dispatch(value);
   }
 
   get swipeControlRange() {
     return this.__signals.swipeControlRange.current();
   }
   set swipeControlRange(value: number | undefined) {
-    this.validateNumber("swipe-control-range", value);
-    this.__signals.swipeControlRange.dispatch(value);
+    if (this.__signals.swipeControlRange.current() !== value) {
+      this.validateNumber("swipe-control-range", value);
+      this.__signals.swipeControlRange.dispatch(value);
+      this.onPropertySet("swipe-control-range", value);
+    }
   }
 
   get width() {
     return this.__signals.width.current();
   }
   set width(value: number | undefined) {
-    this.validateNumber("width", value);
-    this.__signals.width.dispatch(value);
+    if (this.__signals.width.current() !== value) {
+      this.validateNumber("width", value);
+      this.__signals.width.dispatch(value);
+      this.onPropertySet("width", value);
+    }
   }
 
   get sources() {
     return this.__signals.sources.current();
   }
-  set sources(value: string | VideoSource[] | undefined) {
+  set sources(value: string | Partial<VideoSource>[] | undefined) {
     this.__signals.sources.dispatch(value);
   }
 
   get subtitles() {
     return this.__signals.subtitles.current();
   }
-  set subtitles(value: SubtitleTrack[] | undefined) {
+  set subtitles(value: Partial<SubtitleTrack>[] | undefined) {
     this.__signals.subtitles.dispatch(value);
   }
 
@@ -188,6 +233,14 @@ class NCPlayerWebComponent extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+  }
+
+  private onPropertySet(name: string, value: any) {
+    if (value == null || value === false) {
+      this.removeAttribute(name);
+    } else {
+      this.setAttribute(name, String(value));
+    }
   }
 
   private validateString(attributeName: string, value: string | undefined) {
@@ -239,144 +292,133 @@ class NCPlayerWebComponent extends HTMLElement {
     return value;
   }
 
-  private parseSources(
-    value: string | null,
-  ): string | VideoSource[] | undefined {
-    if (value == null) {
-      return undefined;
+  private handleSubtitleAttributeChange(name: string, value: string | null) {
+    const [id, prop] = name.split("-") as [string, string | undefined];
+
+    if (id === "default") {
+      this.__signals.defaultSub.dispatch(value ?? undefined);
+      return;
     }
-    if (value.includes(";")) {
-      /**
-       * ex. "src=video.mp4,type=video/mp4,label=1080p;;src=video.webm,type=video/webm,label=720p"
-       */
-      return value.split(";;").map((source) => {
-        let src = "";
-        let type = "";
-        let label = "";
 
-        let fname = "";
-        let value = "";
-        let stage = 0; // 0 - parsing name, 1 - parsing value
-        for (let i = 0; i < source.length; i++) {
-          const char = source[i];
+    this.__signals.subtitles.dispatch((subs) => {
+      if (!subs) {
+        subs = [];
+      }
+      const existingEntryIdx = subs.findIndex(s => s.id === id);
 
-          switch (stage) {
-            case 0:
-              if (char === "=") {
-                stage = 1;
-                continue;
-              }
-              fname += char;
-              break;
-            case 1:
-              if (char === ",") {
-                const following = source.substring(i + 1);
-                if (/^\w+=/.test(following)) {
-                  stage = 0;
-                  switch (fname) {
-                    case "src":
-                      src = value.trim();
-                      break;
-                    case "type":
-                      type = value.trim();
-                      break;
-                    case "label":
-                      label = value.trim();
-                      break;
-                  }
-                  continue;
-                }
-              }
-              value += char;
-              break;
-          }
+      if (!prop) {
+        // ex: `sub-0="./english.vtt"`
+
+        if (existingEntryIdx === -1) {
+          return subs.concat({ id, src: value ?? undefined });
+        } else {
+          return replace(subs, existingEntryIdx, (old) => {
+            return { ...old, src: value ?? undefined };
+          });
         }
+      } else if (prop === "label") {
+        // ex: `sub-0-label="English"`
 
-        return { src, type, label };
-      });
-    }
-    return value;
-  }
-
-  private parseSubtitles(
-    value: string | null,
-  ): SubtitleTrack[] | undefined {
-    if (value == null) {
-      return undefined;
-    }
-
-    /**
-     * ex. "id=1,src=subtitles_en.vtt,label=English,srclang=en,default=true;;id=2,src=subtitles_es.vtt,label=Spanish,srclang=es,default=false"
-     */
-    return value.split(";;").map((source) => {
-      let id = "";
-      let src = "";
-      let label = "";
-      let srclang = "";
-      let isDefault = false;
-
-      let fname = "";
-      let value = "";
-      let stage = 0; // 0 - parsing name, 1 - parsing value
-
-      const assignParsed = () => {
-        stage = 0;
-        switch (fname) {
-          case "id":
-            id = value.trim();
-            break;
-          case "src":
-            src = value.trim();
-            break;
-          case "label":
-            label = value.trim();
-            break;
-          case "srclang":
-            srclang = value.trim();
-            break;
-          case "default":
-            isDefault = value.trim() === "true";
-            break;
+        if (existingEntryIdx === -1) {
+          return subs.concat({ id, label: value ?? undefined });
+        } else {
+          return replace(subs, existingEntryIdx, (old) => {
+            return { ...old, label: value ?? undefined };
+          });
         }
-        fname = "";
-        value = "";
-      };
+      } else if (prop === "lang") {
+        // ex: `sub-0-lang="en"`
 
-      for (let i = 0; i < source.length; i++) {
-        const char = source[i];
-
-        switch (stage) {
-          case 0:
-            if (char === "=") {
-              stage = 1;
-              continue;
-            }
-            fname += char;
-            break;
-          case 1:
-            if (char === ",") {
-              const following = source.substring(i + 1);
-              if (/^\w+=/.test(following)) {
-                assignParsed();
-                continue;
-              }
-            }
-            value += char;
-            break;
+        if (existingEntryIdx === -1) {
+          return subs.concat({ id, srclang: value ?? undefined });
+        } else {
+          return replace(subs, existingEntryIdx, (old) => {
+            return { ...old, srclang: value ?? undefined };
+          });
         }
       }
-      assignParsed();
-
-      return {
-        id,
-        label,
-        src,
-        srclang,
-        default: isDefault,
-      };
     });
   }
 
+  private handleSourceAttributeChange(name: string, value: string | null) {
+    if (name === "") {
+      this.__signals.sources.dispatch(value ?? undefined);
+      return;
+    }
+
+    const [id, prop] = name.split("-") as [string, string | undefined];
+
+    this.__signals.sources.dispatch((sources) => {
+      if (!Array.isArray(sources)) {
+        sources = [];
+      }
+
+      const existingEntryIdx = sources.findIndex(s => s.id === id);
+
+      if (!prop) {
+        // ex: `source-0="./video.mp4"`
+
+        if (existingEntryIdx === -1) {
+          return sources.concat({ id, src: value ?? undefined });
+        } else {
+          return replace(sources, existingEntryIdx, (old) => {
+            return { ...old, src: value ?? undefined };
+          });
+        }
+      } else if (prop === "type") {
+        // ex: `source-0-type="video/mp4"`
+
+        if (existingEntryIdx === -1) {
+          return sources.concat({ id, type: value ?? undefined });
+        } else {
+          return replace(sources, existingEntryIdx, (old) => {
+            return { ...old, type: value ?? undefined };
+          });
+        }
+      } else if (prop === "label") {
+        // ex: `source-0-label="HD"`
+
+        if (existingEntryIdx === -1) {
+          return sources.concat({ id, label: value ?? undefined });
+        } else {
+          return replace(sources, existingEntryIdx, (old) => {
+            return { ...old, label: value ?? undefined };
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * Since there's no way to observe attributes which names are not known in advance,
+   * To have subtitles controlled via attributes we need to use MutationObserver to
+   * detect changes in all attributes and filter out ones related to subtitles.
+   */
+  private handleDynamicAttributeChange(mutRecords: MutationRecord[]) {
+    for (let i = 0; i < mutRecords.length; i++) {
+      const record = mutRecords[i]!;
+      if (record.type !== "attributes") {
+        continue;
+      }
+
+      if (record.attributeName!.startsWith("sub-")) {
+        this.handleSubtitleAttributeChange(
+          record.attributeName!.substring(4),
+          this.getAttribute(record.attributeName!),
+        );
+      } else if (
+        record.attributeName! === "source"
+        || record.attributeName!.startsWith("source-")
+      ) {
+        this.handleSourceAttributeChange(
+          record.attributeName!.substring(7),
+          this.getAttribute(record.attributeName!),
+        );
+      }
+    }
+  }
+
+  private mutObserver!: MutationObserver;
   protected connectedCallback() {
     this.style.display = "contents";
 
@@ -393,11 +435,47 @@ class NCPlayerWebComponent extends HTMLElement {
       previewHeight: this.__signals.previewHeight,
       previewUpdateThrottle: this.__signals.previewUpdateThrottle,
       previewWidth: this.__signals.previewWidth,
-      sources: this.__signals.sources,
       styles: this.__signals.styles,
       swipeControlRange: this.__signals.swipeControlRange,
       width: this.__signals.width,
-      subtitles: this.__signals.subtitles,
+      sources: this.__signals.sources.derive(sources => {
+        if (Array.isArray(sources)) {
+          return sources.filter((s): s is VideoSource => {
+            return (
+              typeof s.src === "string"
+              && typeof s.type === "string"
+              && typeof s.label === "string"
+            );
+          }).sort((a, b) => a.id!.localeCompare(b.id!));
+        }
+        return sources;
+      }),
+      subtitles: sig.derive(
+        this.__signals.subtitles,
+        this.__signals.defaultSub,
+        (subs, defaultId) => {
+          if (Array.isArray(subs)) {
+            if (defaultId) {
+              const idx = subs.findIndex(s => s.id === defaultId);
+              if (idx !== -1) {
+                subs = replace(subs, idx, (old) => {
+                  return { ...old, default: true };
+                });
+              }
+            }
+
+            return subs.filter((s): s is SubtitleTrack => {
+              return (
+                typeof s.id === "string"
+                && typeof s.src === "string"
+                && typeof s.label === "string"
+                && typeof s.srclang === "string"
+              );
+            }).sort((a, b) => a.id.localeCompare(b.id));
+          }
+          return subs;
+        },
+      ),
       dismounter: {
         ondismount: (fn) => {
           this.__disconnectCallbacks.push(fn);
@@ -406,12 +484,33 @@ class NCPlayerWebComponent extends HTMLElement {
     });
 
     this.shadowRoot!.replaceChildren(this.__player);
+
+    const observer = new MutationObserver(
+      this.handleDynamicAttributeChange.bind(this),
+    );
+    observer.observe(this, {
+      attributes: true,
+    });
+    this.mutObserver = observer;
+
+    for (const attr of this.attributes) {
+      if (attr.name.startsWith("sub-")) {
+        this.handleSubtitleAttributeChange(attr.name.substring(4), attr.value);
+      } else if (
+        attr.name === "source"
+        || attr.name.startsWith("source-")
+      ) {
+        this.handleSourceAttributeChange(attr.name.substring(7), attr.value);
+      }
+    }
   }
 
   protected disconnectedCallback() {
     this.__disconnectCallbacks
       .splice(0, this.__disconnectCallbacks.length)
       .forEach((fn) => fn());
+
+    this.mutObserver.disconnect();
   }
 
   protected attributeChangedCallback(
@@ -464,12 +563,6 @@ class NCPlayerWebComponent extends HTMLElement {
         break;
       case "width":
         this.width = this.parse(newValue, "number");
-        break;
-      case "sources":
-        this.sources = this.parseSources(newValue);
-        break;
-      case "subtitles":
-        this.subtitles = this.parseSubtitles(newValue);
         break;
       case "styles":
         if (newValue == null) {
