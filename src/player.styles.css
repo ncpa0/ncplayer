@@ -1,4 +1,6 @@
 .ncplayer {
+    display: flex;
+    justify-content: center;
     position: relative;
     width: fit-content;
     background-color: black;
