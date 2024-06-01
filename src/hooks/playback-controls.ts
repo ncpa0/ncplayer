@@ -1,6 +1,19 @@
 import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
+import { Dismounter } from "../player.component";
 import { clamp } from "../utilities/math";
+import { useFullscreenController } from "./fullscreen-controller";
+
+export interface VideoControls {
+  togglePlay(): void;
+  seekForward(t: number): void;
+  seekBackward(t: number): void;
+  seek(t: number): void;
+  seekProgress(p: number): void;
+  toggleMute(): void;
+  setVolume(v: number): void;
+  toggleFullscreen(): void;
+}
 
 function getInitVolume(
   persistentVolume: ReadonlySignal<boolean | undefined>,
@@ -14,11 +27,17 @@ function getInitVolume(
   return 1;
 }
 
+const INTERACTABLE_TAGS = ["INPUT", "TEXTAREA", "BUTTON", "SELECT", "OPTION"];
+
 export function usePlaybackControls(
   getElem: () => HTMLVideoElement,
+  getPlayerElem: () => HTMLElement,
+  dismounter: Dismounter | undefined,
   controlsTimeout: ReadonlySignal<number | undefined>,
   persistentVolume: ReadonlySignal<boolean | undefined>,
   swipeControlRange: ReadonlySignal<number | undefined>,
+  globalKeyListener: ReadonlySignal<boolean | undefined>,
+  keySeekDuration: ReadonlySignal<number | undefined>,
 ) {
   const volume = sig(getInitVolume(persistentVolume));
   const bufferProgress = sig(0);
@@ -26,6 +45,80 @@ export function usePlaybackControls(
   const isPLaying = sig(false);
   const showControls = sig(true);
   let lastTimeout: number | undefined;
+
+  const fullscreenController = useFullscreenController(
+    getPlayerElem,
+    dismounter,
+  );
+
+  let lastKnownVolumeBeforeMute = 1;
+  const controls: VideoControls = {
+    togglePlay() {
+      const videoElem = getElem();
+      if (videoElem.paused) {
+        videoElem.play();
+      } else {
+        videoElem.pause();
+      }
+    },
+    seek(t) {
+      const videoElem = getElem();
+      if (Number.isNaN(videoElem.duration)) {
+        return;
+      }
+
+      const newCurrent = clamp(t, 0, videoElem.duration);
+      const newProgress = newCurrent / videoElem.duration;
+
+      videoElem.currentTime = newCurrent;
+      progress.dispatch(newProgress);
+    },
+    seekProgress(p) {
+      const videoElem = getElem();
+      if (Number.isNaN(videoElem.duration)) {
+        return;
+      }
+
+      const newCurrent = clamp(p * videoElem.duration, 0, videoElem.duration);
+
+      videoElem.currentTime = newCurrent;
+      progress.dispatch(p);
+    },
+    seekForward(t) {
+      const videoElem = getElem();
+      if (Number.isNaN(videoElem.duration)) {
+        return;
+      }
+
+      this.seek(videoElem.currentTime + t);
+    },
+    seekBackward(t) {
+      const videoElem = getElem();
+      if (Number.isNaN(videoElem.duration)) {
+        return;
+      }
+
+      this.seek(videoElem.currentTime - t);
+    },
+    setVolume(v) {
+      volume.dispatch(v);
+      if (persistentVolume.current()) {
+        localStorage.setItem("ncplayer-volume", String(v));
+      }
+    },
+    toggleMute() {
+      const videoElem = getElem();
+      if (videoElem.volume === 0) {
+        this.setVolume(lastKnownVolumeBeforeMute);
+      } else {
+        lastKnownVolumeBeforeMute = videoElem.volume;
+        this.setVolume(0);
+      }
+    },
+    toggleFullscreen() {
+      fullscreenController.toggleFullscreen();
+    },
+  };
 
   const startHideTimeout = (e?: MouseEvent) => {
     if (lastTimeout) {
@@ -90,25 +183,9 @@ export function usePlaybackControls(
     }
   };
 
-  const handleVolumeChange = (newVolume: number) => {
-    volume.dispatch(newVolume);
-    if (persistentVolume.current()) {
-      localStorage.setItem("ncplayer-volume", String(newVolume));
-    }
-  };
-
   const handleMouseLeave = () => {
     if (isPLaying.current()) {
       showControls.dispatch(false);
-    }
-  };
-
-  const togglePlay = () => {
-    const videoElem = getElem();
-    if (videoElem.paused) {
-      videoElem.play();
-    } else {
-      videoElem.pause();
     }
   };
 
@@ -116,15 +193,23 @@ export function usePlaybackControls(
 
   let swipeStartCurrentTime = 0;
   let swipeStartTs = 0;
+  let lastPointerUpTs = 0;
   let isSwiping = false;
   let initX = 0;
   const handleCapturePointerUp = (e: PointerEvent) => {
+    const now = Date.now();
+    if (now - lastPointerUpTs < 200) {
+      controls.toggleFullscreen();
+    }
+    lastPointerUpTs = now;
+
     if (isSwiping) {
       return;
     }
+
     const isRmb = e.button === 2;
     if (!isRmb) {
-      togglePlay();
+      controls.togglePlay();
     }
   };
 
@@ -147,8 +232,9 @@ export function usePlaybackControls(
 
   const handleCaptureTouchEnd = (e: TouchEvent) => {
     isSwiping = false;
+
     if (Date.now() - swipeStartTs < 200) {
-      togglePlay();
+      controls.togglePlay();
     }
 
     startHideTimeout();
@@ -192,19 +278,72 @@ export function usePlaybackControls(
     { leading: true, trailing: true },
   );
 
+  // Key controls
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    if (globalKeyListener.current() === false) {
+      if (!target.closest(".ncplayer")) {
+        return;
+      }
+    } else {
+      if (INTERACTABLE_TAGS.includes(target.tagName)) {
+        return;
+      }
+    }
+
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowLeft": {
+        showControls.dispatch(true);
+        startHideTimeout();
+        controls.seekBackward(keySeekDuration.current() ?? 5);
+        break;
+      }
+      case "ArrowRight": {
+        showControls.dispatch(true);
+        startHideTimeout();
+        controls.seekForward(keySeekDuration.current() ?? 5);
+        break;
+      }
+      case "m": {
+        showControls.dispatch(true);
+        startHideTimeout();
+        controls.toggleMute();
+        break;
+      }
+      case "f": {
+        showControls.dispatch(true);
+        startHideTimeout();
+        controls.toggleFullscreen();
+        break;
+      }
+      case " ":
+      case "k":
+        controls.togglePlay();
+        break;
+    }
+  };
+
+  document.addEventListener("keydown", handleKeyDown);
+
   return {
+    isFullscreen: fullscreenController.isFullscreen,
     progress,
     isPLaying,
     showControls,
     volume,
     bufferProgress,
+    controls,
     handle: {
       mouseMove: handleMouseMove,
       mouseLeave: handleMouseLeave,
       play: handlePlay,
       pause: handlePause,
       timeUpdate: handleTimeUpdate,
-      volumeChange: handleVolumeChange,
       progress: handleProgress,
     },
     capturer: {

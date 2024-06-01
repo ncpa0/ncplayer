@@ -8,7 +8,7 @@ export function useFullscreenController(
 ) {
   const isFullscreen = sig(false);
 
-  const handleFullscreenBtnClick = () => {
+  const toggleFullscreen = () => {
     if (isFullscreen.current()) {
       document.exitFullscreen();
     } else {
@@ -44,6 +44,6 @@ export function useFullscreenController(
 
   return {
     isFullscreen,
-    handleFullscreenBtnClick,
+    toggleFullscreen,
   };
 }

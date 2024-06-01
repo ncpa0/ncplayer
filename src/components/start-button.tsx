@@ -1,6 +1,6 @@
 import { Signal } from "@ncpa0cpl/vanilla-jsx/signals";
-import playImage from "../assets/media-playback-start.svg";
-import pauseImage from "../assets/media-playback-stop.svg";
+import PlayImage from "../assets/media-playback-start.svg";
+import PauseImage from "../assets/media-playback-stop.svg";
 
 export type StartButtonProps = {
   video: HTMLVideoElement;
@@ -17,18 +17,18 @@ export function StartButton(props: StartButtonProps) {
   };
 
   return (
-    <button class="ctl-btn play-pause-btn" onclick={handleClick}>
+    <button class="ctl-btn play-pause-btn" onmousedown={handleClick}>
       {props.playing.derive((p) => {
         if (p) {
           return (
-            <div class="ctl-btn-icon play-pause-icon-pause" unsafeHTML>
-              {pauseImage}
+            <div class="ctl-btn-icon play-pause-icon-pause">
+              <PauseImage />
             </div>
           );
         } else {
           return (
-            <div class="ctl-btn-icon play-pause-icon-play" unsafeHTML>
-              {playImage}
+            <div class="ctl-btn-icon play-pause-icon-play">
+              <PlayImage />
             </div>
           );
         }

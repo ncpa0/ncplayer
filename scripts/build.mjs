@@ -67,9 +67,8 @@ async function main() {
       jsxImportSource: "@ncpa0cpl/vanilla-jsx",
       loader: {
         ".css": "text",
-        ".svg": "text",
       },
-      plugins: [CssMinifierPlugin()],
+      plugins: [CssMinifierPlugin(), SvgLoaderPlugin()],
     },
     // Dev only:
     // compileVendors: [
@@ -138,6 +137,41 @@ function CssMinifierPlugin() {
             errors: [err],
           };
         }
+      });
+    },
+  };
+}
+
+/**
+ * @returns {import("esbuild").Plugin}
+ */
+function SvgLoaderPlugin() {
+  return {
+    name: "svg-loader",
+    setup(build) {
+      build.onResolve({ filter: /\.svg$/ }, (args) => {
+        return {
+          path: path.resolve(args.resolveDir, args.path),
+          namespace: "svg-ns",
+        };
+      });
+
+      build.onLoad({ filter: /.+/, namespace: "svg-ns" }, async (args) => {
+        const file = await fs.readFile(args.path, "utf-8");
+
+        const contents = /* js */ `
+          const svgstr = ${JSON.stringify(file)};
+          const parser = new DOMParser();
+          export default function() {
+            const elem = parser.parseFromString(svgstr, "image/svg+xml").firstChild;
+            return elem;
+          }
+        `;
+
+        return {
+          contents,
+          loader: "js",
+        };
       });
     },
   };

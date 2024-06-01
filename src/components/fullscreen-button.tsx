@@ -1,6 +1,6 @@
 import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx/signals";
-import fullscreenExitIcon from "../assets/fullscreen-exit.svg";
-import fullscreenIcon from "../assets/fullscreen.svg";
+import FullscreenExitIcon from "../assets/fullscreen-exit.svg";
+import FullscreenIcon from "../assets/fullscreen.svg";
 
 export type FullscreenButtonProps = {
   isFullscreen: ReadonlySignal<boolean>;
@@ -9,18 +9,18 @@ export type FullscreenButtonProps = {
 
 export function FullscreenButton(props: FullscreenButtonProps) {
   return (
-    <button class="ctl-btn fullscreen-btn" onclick={props.onPress}>
+    <button class="ctl-btn fullscreen-btn" onmousedown={props.onPress}>
       {props.isFullscreen.derive((isFullscreen) => {
         if (isFullscreen) {
           return (
-            <div class="ctl-btn-icon fullscreen-exit" unsafeHTML>
-              {fullscreenExitIcon}
+            <div class="ctl-btn-icon fullscreen-exit">
+              <FullscreenExitIcon />
             </div>
           );
         } else {
           return (
-            <div class="ctl-btn-icon fullscreen-open" unsafeHTML>
-              {fullscreenIcon}
+            <div class="ctl-btn-icon fullscreen-open">
+              <FullscreenIcon />
             </div>
           );
         }

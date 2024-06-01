@@ -113,11 +113,12 @@ export function VideoTrack(props: VideoTrackProps) {
       const updatePreviews = throttle(
         (trackRect: DOMRect, clientX: number) => {
           const percent = (clientX - trackRect.left) / trackRect.width;
-          const tmpValue = changeWithStep(
+          let tmpValue = changeWithStep(
             props.progress.current(),
             toPrecision(min + percent * (max - min), 6),
             0.01,
           ) * props.video.duration;
+          tmpValue = Math.max(0, tmpValue);
 
           if (Number.isFinite(tmpValue)) {
             if (player && Math.abs(player.currentTime - tmpValue) > 1.1) {
@@ -208,6 +209,8 @@ export function VideoTrack(props: VideoTrackProps) {
       onmouseleave={previewHandlers.derive((h) => h.handleMouseLeave)}
       onpointermove={stopEvent}
       ondrag={stopEvent}
+      tabIndex={1}
+      role="slider"
     >
       <div
         class="track-bg"

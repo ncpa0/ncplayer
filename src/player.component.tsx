@@ -7,7 +7,6 @@ import { SubtitleSelect } from "./components/subtitle-select";
 import { TimeDisplay } from "./components/time-display";
 import { VideoTrack } from "./components/video-track";
 import { VolumeControl } from "./components/volume-control";
-import { useFullscreenController } from "./hooks/fullscreen-controller";
 import { usePlaybackControls } from "./hooks/playback-controls";
 import defaultStylesheet from "./player.styles.css";
 import { signalize } from "./utilities/signalize";
@@ -113,6 +112,17 @@ export type PlayerProps = {
    */
   swipeControlRange?: MaybeReadonlySignal<number | undefined>;
   /**
+   * By default player will listen to all key events that don't have
+   * an interactable target. If set to false only events with a
+   * target within the player will be listened to.
+   */
+  globalKeyListener?: MaybeReadonlySignal<boolean | undefined>;
+  /**
+   * The duration in seconds that the player should seek when the
+   * user presses the left or right arrow keys.
+   */
+  keySeekDuration?: MaybeReadonlySignal<number | undefined>;
+  /**
    * An interface that should expose a `ondismount` method that registers
    * a listener. NCPlayer will register teardown callbacks to this interface.
    */
@@ -130,9 +140,12 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
     previewUpdateThrottle,
     persistentVolume,
     swipeControlRange,
+    globalKeyListener,
+    keySeekDuration,
   } = props;
 
   const {
+    isFullscreen,
     isPLaying,
     progress,
     bufferProgress,
@@ -140,16 +153,16 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
     volume,
     handle,
     capturer,
+    controls,
   } = usePlaybackControls(
     () => videoElem,
+    () => ncplayerElem,
+    dismounter,
     controlsTimeout,
     persistentVolume,
     swipeControlRange,
-  );
-
-  const { isFullscreen, handleFullscreenBtnClick } = useFullscreenController(
-    () => ncplayerElem,
-    dismounter,
+    globalKeyListener,
+    keySeekDuration,
   );
 
   const videoElem = (
@@ -212,6 +225,8 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
         ontouchcancel={capturer.touchend}
         onpointerup={capturer.pointerUp}
         oncontextmenu={stopEvent}
+        tabIndex={1}
+        role="button"
       />
       <div
         class={{
@@ -234,13 +249,7 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
           previewUpdateThrottle={previewUpdateThrottle}
           dismounter={dismounter}
           onSeek={(newProgress) => {
-            if (Number.isNaN(videoElem.duration)) {
-              return;
-            }
-
-            const newTime = videoElem.duration * newProgress;
-            videoElem.currentTime = newTime;
-            progress.dispatch(newProgress);
+            controls.seekProgress(newProgress);
           }}
         />
         <TimeDisplay
@@ -250,7 +259,9 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
         />
         <VolumeControl
           volume={volume}
-          onVolumeChange={handle.volumeChange}
+          onVolumeChange={(v) => controls.setVolume(v)}
+          onVolumeToggle={() => controls.toggleMute()}
+          dismounter={dismounter}
         />
         <SubtitleSelect
           subtitles={subtitles}
@@ -260,7 +271,7 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
         />
         <FullscreenButton
           isFullscreen={isFullscreen}
-          onPress={handleFullscreenBtnClick}
+          onPress={() => controls.toggleFullscreen()}
         />
       </div>
     </div>

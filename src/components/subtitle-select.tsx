@@ -1,6 +1,6 @@
 import { Range } from "@ncpa0cpl/vanilla-jsx";
 import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
-import subtitleIcon from "../assets/subtitles.svg";
+import SubtitleIcon from "../assets/subtitles.svg";
 import { useSubtrackController } from "../hooks/subtrack-controller";
 import { Dismounter, SubtitleTrack } from "../player.component";
 
@@ -26,6 +26,7 @@ export function SubtitleSelect(
   const handlePress = (e: MouseEvent) => {
     popoverVisible.dispatch(v => !v);
     e.stopPropagation();
+    e.preventDefault();
   };
 
   const onDocumentClick = (e: MouseEvent) => {
@@ -61,7 +62,7 @@ export function SubtitleSelect(
               "subtitle-selector-item": true,
               "active": activeTrack.derive(at => at === t.id),
             }}
-            onclick={() => handleSubTrackSelect(t)}
+            onmousedown={() => handleSubTrackSelect(t)}
           >
             {t.label}
           </button>
@@ -72,7 +73,7 @@ export function SubtitleSelect(
           "subtitle-selector-item": true,
           "active": activeTrack.derive(at => at === null),
         }}
-        onclick={handleSubTrackDisable}
+        onmousedown={handleSubTrackDisable}
       >
         None
       </button>
@@ -90,10 +91,10 @@ export function SubtitleSelect(
                 "subtitle-selector-btn": true,
                 "popover-visible": popoverVisible,
               }}
-              onclick={handlePress}
+              onmousedown={handlePress}
             >
-              <div class="subtitle-selector-icon" unsafeHTML>
-                {subtitleIcon}
+              <div class="subtitle-selector-icon">
+                <SubtitleIcon />
               </div>
               {popoverVisible.derive(v => v && popover)}
             </button>

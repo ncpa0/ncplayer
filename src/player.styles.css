@@ -8,10 +8,18 @@
     & * {
         font-size: inherit;
         box-sizing: content-box;
+
+        &:focus-visible {
+            outline: none;
+        }
     }
 
     & div {
         display: flex;
+    }
+
+    & .vjsx-if-container {
+        display: contents;
     }
 
     &.hide-cursor {
