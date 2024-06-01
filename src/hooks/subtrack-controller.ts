@@ -1,4 +1,4 @@
-import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import { Dismounter, SubtitleTrack } from "../player.component";
 import { countChar } from "../utilities/count-char";
 

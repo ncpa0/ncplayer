@@ -1,4 +1,4 @@
-import { sig } from "@ncpa0cpl/vanilla-jsx";
+import { sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import { Dismounter } from "../player.component";
 import { getFullScreenElement } from "../utilities/get-fullscreen-elem";
 

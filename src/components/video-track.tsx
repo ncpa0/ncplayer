@@ -1,4 +1,4 @@
-import { ReadonlySignal, sig, Signal } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal, sig, Signal } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
 import { Dismounter } from "../player.component";
 import { detectMobile } from "../utilities/detect-mobile";

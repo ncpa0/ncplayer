@@ -27,12 +27,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ncpa0/ncplayer?tab=readme-ov-file"
+    "url": "https://github.com/ncpa0/ncplayer"
   },
   "description": "A video player with support for preview on track hover.",
   "license": "MIT",
   "author": {
-    "name": "Szymon Bretner",
+    "name": "Szymon Bretner (ncpa0cpl)",
     "email": "szymonb21@gmail.com"
   },
   "scripts": {
@@ -49,10 +49,12 @@
     "dist",
     "LICENSE",
     "README.md",
-    "package.json"
+    "package.json",
+    "bundle.js",
+    "bundle.d.ts"
   ],
   "dependencies": {
-    "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.17",
+    "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.19",
     "lodash.throttle": "^4.1.1"
   },
   "devDependencies": {

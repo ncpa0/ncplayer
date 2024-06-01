@@ -1,4 +1,4 @@
-import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx/signals";
 import volumeMutedIcon from "../assets/volume-muted.svg";
 import volumeIcon from "../assets/volume.svg";
 import { Dismounter } from "../player.component";

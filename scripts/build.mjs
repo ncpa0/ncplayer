@@ -96,8 +96,6 @@ async function main() {
 
   await Promise.all([buildBase(), buildBundle()]);
   await removeJsxteTypeImports();
-
-  await fs.cp(p("src/index.d.ts"), p("dist/types/index.d.ts"));
 }
 
 /**

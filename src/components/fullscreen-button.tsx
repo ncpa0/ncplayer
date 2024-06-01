@@ -1,4 +1,4 @@
-import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx/signals";
 import fullscreenExitIcon from "../assets/fullscreen-exit.svg";
 import fullscreenIcon from "../assets/fullscreen.svg";
 

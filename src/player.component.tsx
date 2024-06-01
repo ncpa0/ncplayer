@@ -1,4 +1,4 @@
-import { sig } from "@ncpa0cpl/vanilla-jsx";
+import { MaybeReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import { FullscreenButton } from "./components/fullscreen-button";
 import { VideoSources } from "./components/sources";
 import { StartButton } from "./components/start-button";
@@ -10,11 +10,8 @@ import { VolumeControl } from "./components/volume-control";
 import { useFullscreenController } from "./hooks/fullscreen-controller";
 import { usePlaybackControls } from "./hooks/playback-controls";
 import defaultStylesheet from "./player.styles.css";
-import type { ReadonlySignal } from "./signal.types";
 import { signalize } from "./utilities/signalize";
 import { stopEvent } from "./utilities/stop-event";
-
-export type MaybeSignal<T> = T | ReadonlySignal<T>;
 
 export type VideoSource = {
   id?: string;
@@ -39,69 +36,69 @@ export type PlayerProps = {
   /**
    * Width of the video player.
    */
-  width?: MaybeSignal<number | undefined>;
+  width?: MaybeReadonlySignal<number | undefined>;
   /**
    * Height of the video player.
    */
-  height?: MaybeSignal<number | undefined>;
+  height?: MaybeReadonlySignal<number | undefined>;
   /**
    * Whether the video should start playing as soon as it is ready.
    */
-  autoplay?: MaybeSignal<boolean | undefined>;
+  autoplay?: MaybeReadonlySignal<boolean | undefined>;
   /**
    * Whether the video should be muted.
    */
-  muted?: MaybeSignal<boolean | undefined>;
+  muted?: MaybeReadonlySignal<boolean | undefined>;
   /**
    * URL of the image to use as the poster.
    */
-  poster?: MaybeSignal<string | undefined>;
+  poster?: MaybeReadonlySignal<string | undefined>;
   /**
    * The preload attribute for the video.
    */
-  preload?: MaybeSignal<HTMLMediaElement["preload"] | undefined>;
+  preload?: MaybeReadonlySignal<HTMLMediaElement["preload"] | undefined>;
   /**
    * Whether the video should be played in a loop.
    */
-  loop?: MaybeSignal<boolean | undefined>;
+  loop?: MaybeReadonlySignal<boolean | undefined>;
   /**
    * URL(s) of the video to play. If provided multiple sources, the player
    * will allow the user to select the source.
    */
   sources?:
-    | MaybeSignal<string | undefined>
-    | MaybeSignal<Array<VideoSource> | undefined>
-    | MaybeSignal<string | Array<VideoSource> | undefined>;
+    | MaybeReadonlySignal<string | undefined>
+    | MaybeReadonlySignal<Array<VideoSource> | undefined>
+    | MaybeReadonlySignal<string | Array<VideoSource> | undefined>;
   /**
    * Array of subtitle tracks to allow user to select.
    */
-  subtitles?: MaybeSignal<Array<SubtitleTrack> | undefined>;
+  subtitles?: MaybeReadonlySignal<Array<SubtitleTrack> | undefined>;
   /**
    * Time in milliseconds after which the controls should be hidden.
    */
-  controlsTimeout?: MaybeSignal<number | undefined>;
+  controlsTimeout?: MaybeReadonlySignal<number | undefined>;
   /**
    * URL of the video to use as the preview. Preview will be displayed above
    * the progress bar as the user hovers over it.
    */
-  preview?: MaybeSignal<string | undefined>;
+  preview?: MaybeReadonlySignal<string | undefined>;
   /**
    * Determines how often the preview video timestamp should be updated as
    * the user hovers over the progress bar.
    */
-  previewUpdateThrottle?: MaybeSignal<number | undefined>;
+  previewUpdateThrottle?: MaybeReadonlySignal<number | undefined>;
   /**
    * Width of the preview video.
    */
-  previewWidth?: MaybeSignal<number | undefined>;
+  previewWidth?: MaybeReadonlySignal<number | undefined>;
   /**
    * Height of the preview video.
    */
-  previewHeight?: MaybeSignal<number | undefined>;
+  previewHeight?: MaybeReadonlySignal<number | undefined>;
   /**
    * Whether the player volume should persist between reloads.
    */
-  persistentVolume?: MaybeSignal<boolean | undefined>;
+  persistentVolume?: MaybeReadonlySignal<boolean | undefined>;
   /**
    * When set to `false`, no styles will be added to the DOM, resulting
    * in the unstyled player. (you will need to add styles yourself)
@@ -109,12 +106,12 @@ export type PlayerProps = {
    * When given a string, that string will be inserted into the DOM as a
    * style tag instead of the default styles.
    */
-  styles?: MaybeSignal<string | boolean | undefined>;
+  styles?: MaybeReadonlySignal<string | boolean | undefined>;
   /**
    * Maximum time range (in ms) it's possible to seek forward or backward by
    * swiping on a mobile device.
    */
-  swipeControlRange?: MaybeSignal<number | undefined>;
+  swipeControlRange?: MaybeReadonlySignal<number | undefined>;
   /**
    * An interface that should expose a `ondismount` method that registers
    * a listener. NCPlayer will register teardown callbacks to this interface.

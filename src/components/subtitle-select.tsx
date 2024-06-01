@@ -1,4 +1,5 @@
-import { Range, ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
+import { Range } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import subtitleIcon from "../assets/subtitles.svg";
 import { useSubtrackController } from "../hooks/subtrack-controller";
 import { Dismounter, SubtitleTrack } from "../player.component";

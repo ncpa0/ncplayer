@@ -1,4 +1,4 @@
-import { sig, Signal } from "@ncpa0cpl/vanilla-jsx";
+import { sig, Signal } from "@ncpa0cpl/vanilla-jsx/signals";
 import { formatTime } from "../utilities/format-time";
 
 export type TimeDisplayProps = {

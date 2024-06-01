@@ -1,4 +1,4 @@
-import { sig } from "@ncpa0cpl/vanilla-jsx";
+import { sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import { NCPlayer, SubtitleTrack, VideoSource } from "./player.component";
 import { replace } from "./utilities/repalce";
 

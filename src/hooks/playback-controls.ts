@@ -1,4 +1,4 @@
-import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
 import { clamp } from "../utilities/math";
 

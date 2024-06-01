@@ -1,4 +1,4 @@
-import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx";
+import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx/signals";
 import { SubtitleTrack } from "../player.component";
 
 export type VideoTracksProps = {

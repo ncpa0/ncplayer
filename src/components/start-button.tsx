@@ -1,4 +1,4 @@
-import { Signal } from "@ncpa0cpl/vanilla-jsx";
+import { Signal } from "@ncpa0cpl/vanilla-jsx/signals";
 import playImage from "../assets/media-playback-start.svg";
 import pauseImage from "../assets/media-playback-stop.svg";
 

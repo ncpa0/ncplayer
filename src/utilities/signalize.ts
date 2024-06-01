@@ -1,25 +1,12 @@
-import { ReadonlySignal, sig, VSignal } from "@ncpa0cpl/vanilla-jsx";
-import { MaybeSignal } from "../player.component";
+import { ReadonlySignal, sig, SignalOf } from "@ncpa0cpl/vanilla-jsx/signals";
 
 type Rewrap<O> = O extends infer U ? {
     [K in keyof U]: U[K];
   }
   : never;
 
-type TypeOfMaybeSignal<M extends MaybeSignal<any>> = Extract<
-  M,
-  ReadonlySignal<any>
-> extends ReadonlySignal<any> ? ReturnType<
-    Extract<
-      M,
-      ReadonlySignal<any>
-    >["current"]
-  >
-  : never;
-
 export type Designalized<O extends object> = {
-  [K in keyof O]: ReadonlySignal<any> extends O[K] ? TypeOfMaybeSignal<O[K]>
-    : O[K];
+  [K in keyof O]: SignalOf<O[K]>;
 };
 
 type _Signalized<O extends object> = {
@@ -33,11 +20,7 @@ export function signalize<O extends object>(obj: O): Signalized<O> {
 
   for (let i = 0; i < entries.length; i++) {
     const [key, value] = entries[i]!;
-    if (value instanceof VSignal) {
-      continue;
-    }
-
-    entries[i] = [key, sig(value) as any];
+    entries[i] = [key, sig.as(value) as any];
   }
 
   const entriesMap = new Map(entries);
@@ -48,7 +31,7 @@ export function signalize<O extends object>(obj: O): Signalized<O> {
       if (entry) {
         return entry;
       }
-      const emptySignal = sig(undefined);
+      const emptySignal = sig.as(undefined);
       entries.set(propName as keyof O, emptySignal as any);
       return emptySignal;
     },
