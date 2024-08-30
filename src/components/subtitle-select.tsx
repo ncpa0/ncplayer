@@ -62,7 +62,12 @@ export function SubtitleSelect(
               "subtitle-selector-item": true,
               "active": activeTrack.derive(at => at === t.id),
             }}
-            onmousedown={() => handleSubTrackSelect(t)}
+            onmousedown={(ev) => {
+              handleSubTrackSelect(t);
+              popoverVisible.dispatch(false);
+              ev.stopPropagation();
+              ev.preventDefault();
+            }}
           >
             {t.label}
           </button>
