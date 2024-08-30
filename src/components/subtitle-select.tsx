@@ -30,7 +30,7 @@ export function SubtitleSelect(
   };
 
   const onDocumentClick = (e: MouseEvent) => {
-    if (!popoverVisible.current()) {
+    if (!popoverVisible.get()) {
       return;
     }
 

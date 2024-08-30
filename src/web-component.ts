@@ -45,10 +45,10 @@ class NCPlayerWebComponent extends HTMLElement {
   };
 
   get autoplay() {
-    return this.__signals.autoplay.current();
+    return this.__signals.autoplay.get();
   }
   set autoplay(value: boolean | undefined) {
-    if (this.__signals.autoplay.current() !== value) {
+    if (this.__signals.autoplay.get() !== value) {
       this.validateBoolean("autoplay", value);
       this.__signals.autoplay.dispatch(value);
       this.onPropertySet("autoplay", value);
@@ -56,10 +56,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get controlsTimeout() {
-    return this.__signals.controlsTimeout.current();
+    return this.__signals.controlsTimeout.get();
   }
   set controlsTimeout(value: number | undefined) {
-    if (this.__signals.controlsTimeout.current() !== value) {
+    if (this.__signals.controlsTimeout.get() !== value) {
       this.validateNumber("controls-timeout", value);
       this.__signals.controlsTimeout.dispatch(value);
       this.onPropertySet("controls-timeout", value);
@@ -67,10 +67,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get height() {
-    return this.__signals.height.current();
+    return this.__signals.height.get();
   }
   set height(value: number | undefined) {
-    if (this.__signals.height.current() !== value) {
+    if (this.__signals.height.get() !== value) {
       this.validateNumber("height", value);
       this.__signals.height.dispatch(value);
       this.onPropertySet("height", value);
@@ -78,10 +78,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get loop() {
-    return this.__signals.loop.current();
+    return this.__signals.loop.get();
   }
   set loop(value: boolean | undefined) {
-    if (this.__signals.loop.current() !== value) {
+    if (this.__signals.loop.get() !== value) {
       this.validateBoolean("loop", value);
       this.__signals.loop.dispatch(value);
       this.onPropertySet("loop", value);
@@ -89,10 +89,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get muted() {
-    return this.__signals.muted.current();
+    return this.__signals.muted.get();
   }
   set muted(value: boolean | undefined) {
-    if (this.__signals.muted.current() !== value) {
+    if (this.__signals.muted.get() !== value) {
       this.validateBoolean("muted", value);
       this.__signals.muted.dispatch(value);
       this.onPropertySet("muted", value);
@@ -100,10 +100,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get persistentVolume() {
-    return this.__signals.persistentVolume.current();
+    return this.__signals.persistentVolume.get();
   }
   set persistentVolume(value: boolean | undefined) {
-    if (this.__signals.persistentVolume.current() !== value) {
+    if (this.__signals.persistentVolume.get() !== value) {
       this.validateBoolean("persistent-volume", value);
       this.__signals.persistentVolume.dispatch(value);
       this.onPropertySet("persistent-volume", value);
@@ -111,10 +111,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get poster() {
-    return this.__signals.poster.current();
+    return this.__signals.poster.get();
   }
   set poster(value: string | undefined) {
-    if (this.__signals.poster.current() !== value) {
+    if (this.__signals.poster.get() !== value) {
       this.validateString("poster", value);
       this.__signals.poster.dispatch(value);
       this.onPropertySet("poster", value);
@@ -122,10 +122,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get preload() {
-    return this.__signals.preload.current();
+    return this.__signals.preload.get();
   }
   set preload(value: HTMLMediaElement["preload"] | undefined) {
-    if (this.__signals.preload.current() !== value) {
+    if (this.__signals.preload.get() !== value) {
       this.validateString("preload", value);
       this.__signals.preload.dispatch(value);
       this.onPropertySet("preload", value);
@@ -133,10 +133,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get preview() {
-    return this.__signals.preview.current();
+    return this.__signals.preview.get();
   }
   set preview(value: string | undefined) {
-    if (this.__signals.preview.current() !== value) {
+    if (this.__signals.preview.get() !== value) {
       this.validateString("preview", value);
       this.__signals.preview.dispatch(value);
       this.onPropertySet("preview", value);
@@ -144,10 +144,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get previewHeight() {
-    return this.__signals.previewHeight.current();
+    return this.__signals.previewHeight.get();
   }
   set previewHeight(value: number | undefined) {
-    if (this.__signals.previewHeight.current() !== value) {
+    if (this.__signals.previewHeight.get() !== value) {
       this.validateNumber("preview-height", value);
       this.__signals.previewHeight.dispatch(value);
       this.onPropertySet("preview-height", value);
@@ -155,10 +155,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get previewUpdateThrottle() {
-    return this.__signals.previewUpdateThrottle.current();
+    return this.__signals.previewUpdateThrottle.get();
   }
   set previewUpdateThrottle(value: number | undefined) {
-    if (this.__signals.previewUpdateThrottle.current() === value) {
+    if (this.__signals.previewUpdateThrottle.get() === value) {
       this.validateNumber("preview-update-throttle", value);
       this.__signals.previewUpdateThrottle.dispatch(value);
       this.onPropertySet("preview-update-throttle", value);
@@ -166,10 +166,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get previewWidth() {
-    return this.__signals.previewWidth.current();
+    return this.__signals.previewWidth.get();
   }
   set previewWidth(value: number | undefined) {
-    if (this.__signals.previewWidth.current() !== value) {
+    if (this.__signals.previewWidth.get() !== value) {
       this.validateNumber("preview-width", value);
       this.__signals.previewWidth.dispatch(value);
       this.onPropertySet("preview-width", value);
@@ -177,10 +177,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get styles() {
-    return this.__signals.styles.current();
+    return this.__signals.styles.get();
   }
   set styles(value: string | boolean | undefined) {
-    if (this.__signals.styles.current() !== value) {
+    if (this.__signals.styles.get() !== value) {
       if (typeof value !== "string" && typeof value !== "boolean") {
         throw new Error(
           `Attribute "styles" must be either a string or a boolean`,
@@ -192,10 +192,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get swipeControlRange() {
-    return this.__signals.swipeControlRange.current();
+    return this.__signals.swipeControlRange.get();
   }
   set swipeControlRange(value: number | undefined) {
-    if (this.__signals.swipeControlRange.current() !== value) {
+    if (this.__signals.swipeControlRange.get() !== value) {
       this.validateNumber("swipe-control-range", value);
       this.__signals.swipeControlRange.dispatch(value);
       this.onPropertySet("swipe-control-range", value);
@@ -203,10 +203,10 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get width() {
-    return this.__signals.width.current();
+    return this.__signals.width.get();
   }
   set width(value: number | undefined) {
-    if (this.__signals.width.current() !== value) {
+    if (this.__signals.width.get() !== value) {
       this.validateNumber("width", value);
       this.__signals.width.dispatch(value);
       this.onPropertySet("width", value);
@@ -214,14 +214,14 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   get sources() {
-    return this.__signals.sources.current();
+    return this.__signals.sources.get();
   }
   set sources(value: string | Partial<VideoSource>[] | undefined) {
     this.__signals.sources.dispatch(value);
   }
 
   get subtitles() {
-    return this.__signals.subtitles.current();
+    return this.__signals.subtitles.get();
   }
   set subtitles(value: Partial<SubtitleTrack>[] | undefined) {
     this.__signals.subtitles.dispatch(value);

@@ -18,7 +18,7 @@ export interface VideoControls {
 function getInitVolume(
   persistentVolume: ReadonlySignal<boolean | undefined>,
 ) {
-  if (persistentVolume.current()) {
+  if (persistentVolume.get()) {
     const stored = localStorage.getItem("ncplayer-volume");
     if (stored) {
       return Number(stored);
@@ -102,7 +102,7 @@ export function usePlaybackControls(
     },
     setVolume(v) {
       volume.dispatch(v);
-      if (persistentVolume.current()) {
+      if (persistentVolume.get()) {
         localStorage.setItem("ncplayer-volume", String(v));
       }
     },
@@ -129,11 +129,11 @@ export function usePlaybackControls(
       !e || (e.target instanceof HTMLElement && !e.target.closest(".controls"))
     ) {
       lastTimeout = window.setTimeout(() => {
-        if (isPLaying.current()) {
+        if (isPLaying.get()) {
           showControls.dispatch(false);
         }
         lastTimeout = undefined;
-      }, controlsTimeout?.current() ?? 1000);
+      }, controlsTimeout?.get() ?? 1000);
     }
   };
 
@@ -184,7 +184,7 @@ export function usePlaybackControls(
   };
 
   const handleMouseLeave = () => {
-    if (isPLaying.current()) {
+    if (isPLaying.get()) {
       showControls.dispatch(false);
     }
   };
@@ -262,7 +262,7 @@ export function usePlaybackControls(
 
       // calculate new time based on touching position
       const videoElem = getElem();
-      const timeRange = (swipeControlRange.current() ?? 60 * 1000) / 1000;
+      const timeRange = (swipeControlRange.get() ?? 60 * 1000) / 1000;
       const minT = Math.max(0, swipeStartCurrentTime - timeRange);
       const maxT = Math.min(
         videoElem.duration,
@@ -282,7 +282,7 @@ export function usePlaybackControls(
 
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement;
-    if (globalKeyListener.current() === false) {
+    if (globalKeyListener.get() === false) {
       if (!target.closest(".ncplayer")) {
         return;
       }
@@ -300,13 +300,13 @@ export function usePlaybackControls(
       case "ArrowLeft": {
         showControls.dispatch(true);
         startHideTimeout();
-        controls.seekBackward(keySeekDuration.current() ?? 5);
+        controls.seekBackward(keySeekDuration.get() ?? 5);
         break;
       }
       case "ArrowRight": {
         showControls.dispatch(true);
         startHideTimeout();
-        controls.seekForward(keySeekDuration.current() ?? 5);
+        controls.seekForward(keySeekDuration.get() ?? 5);
         break;
       }
       case "m": {

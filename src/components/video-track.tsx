@@ -60,7 +60,7 @@ export function VideoTrack(props: VideoTrackProps) {
       const { left, width } = vtrack.getBoundingClientRect();
       const percent = (e.clientX - left) / width;
       const tmpValue = changeWithStep(
-        props.progress.current(),
+        props.progress.get(),
         toPrecision(min + percent * (max - min), 6),
         0.01,
       );
@@ -114,7 +114,7 @@ export function VideoTrack(props: VideoTrackProps) {
         (trackRect: DOMRect, clientX: number) => {
           const percent = (clientX - trackRect.left) / trackRect.width;
           let tmpValue = changeWithStep(
-            props.progress.current(),
+            props.progress.get(),
             toPrecision(min + percent * (max - min), 6),
             0.01,
           ) * props.video.duration;
@@ -196,7 +196,7 @@ export function VideoTrack(props: VideoTrackProps) {
   props.dismounter?.ondismount(() => {
     window.removeEventListener("pointermove", handlePointerMove);
     window.removeEventListener("pointerup", handlePointerUp);
-    previewPlayer.current()?.remove();
+    previewPlayer.get()?.remove();
   });
 
   const vtrack = (

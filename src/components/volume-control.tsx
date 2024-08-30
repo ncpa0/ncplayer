@@ -48,7 +48,7 @@ export function VolumeControl(props: VolumeControlProps) {
       const { left, width } = slider.getBoundingClientRect();
       const percent = (e.clientX - left) / width;
       const tmpValue = changeWithStep(
-        props.volume.current(),
+        props.volume.get(),
         toPrecision(min + percent * (max - min), 6),
         0.01,
       );

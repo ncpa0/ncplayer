@@ -1,6 +1,6 @@
 {
   "name": "ncplayer",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "main": "./dist/legacy/index.js",
   "types": "./dist/types/index.d.ts",
@@ -54,7 +54,7 @@
     "bundle.d.ts"
   ],
   "dependencies": {
-    "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.19",
+    "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.23",
     "lodash.throttle": "^4.1.1"
   },
   "devDependencies": {
