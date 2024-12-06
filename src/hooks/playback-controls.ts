@@ -1,6 +1,6 @@
 import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
-import { Dismounter } from "../player.component";
+import { ControllerRef, Dismounter } from "../player.component";
 import { clamp } from "../utilities/math";
 import { useFullscreenController } from "./fullscreen-controller";
 
@@ -38,6 +38,7 @@ export function usePlaybackControls(
   swipeControlRange: ReadonlySignal<number | undefined>,
   globalKeyListener: ReadonlySignal<boolean | undefined>,
   keySeekDuration: ReadonlySignal<number | undefined>,
+  controllerRef?: ControllerRef,
 ) {
   const volume = sig(getInitVolume(persistentVolume));
   const bufferProgress = sig(0);
@@ -101,6 +102,7 @@ export function usePlaybackControls(
       this.seek(videoElem.currentTime - t);
     },
     setVolume(v) {
+      v = clamp(v, 0, 1);
       volume.dispatch(v);
       if (persistentVolume.get()) {
         localStorage.setItem("ncplayer-volume", String(v));
@@ -329,6 +331,39 @@ export function usePlaybackControls(
   };
 
   document.addEventListener("keydown", handleKeyDown);
+
+  if (controllerRef) {
+    controllerRef.current = {
+      play() {
+        getElem().play();
+      },
+      pause() {
+        getElem().pause();
+      },
+      seek(t) {
+        controls.seek(t);
+      },
+      setVolume(v) {
+        controls.setVolume(v);
+      },
+      toggleFullscreen() {
+        controls.toggleFullscreen();
+      },
+      toggleMute() {
+        controls.toggleMute();
+      },
+      reset() {
+        const videoElem = getElem();
+        videoElem.pause();
+        videoElem.currentTime = 0;
+        progress.dispatch(0);
+        bufferProgress.dispatch(0);
+      },
+      video() {
+        return getElem();
+      },
+    };
+  }
 
   return {
     isFullscreen: fullscreenController.isFullscreen,

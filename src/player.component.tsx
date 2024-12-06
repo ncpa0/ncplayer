@@ -12,6 +12,21 @@ import defaultStylesheet from "./player.styles.css";
 import { signalize } from "./utilities/signalize";
 import { stopEvent } from "./utilities/stop-event";
 
+export interface PlayerController {
+  play(): void;
+  pause(): void;
+  seek(second: number): void;
+  setVolume(volume: number): void;
+  toggleMute(): void;
+  toggleFullscreen(): void;
+  reset(): void;
+  video(): HTMLVideoElement;
+}
+
+export type ControllerRef = { current: PlayerController } | {
+  current?: PlayerController | null;
+};
+
 export type VideoSource = {
   id?: string;
   src: string;
@@ -127,9 +142,39 @@ export type PlayerProps = {
    * a listener. NCPlayer will register teardown callbacks to this interface.
    */
   dismounter?: Dismounter;
+  /** A reference to an object to which a controller will be assigned, can be
+   * used to programatically control the player. */
+  controllerRef?: ControllerRef;
+  on?: {
+    audioprocess?: (event: AudioProcessingEvent) => void;
+    canplay?: (event: Event) => void;
+    canplaythrough?: (event: Event) => void;
+    complete?: (event: Event) => void;
+    durationchange?: (event: Event) => void;
+    emptied?: (event: Event) => void;
+    ended?: (event: Event) => void;
+    error?: (event: Event) => void;
+    loadeddata?: (event: Event) => void;
+    loadedmetadata?: (event: Event) => void;
+    loadstart?: (event: Event) => void;
+    pause?: (event: Event) => void;
+    play?: (event: Event) => void;
+    playing?: (event: Event) => void;
+    progress?: (event: Event) => void;
+    ratechange?: (event: Event) => void;
+    seeked?: (event: Event) => void;
+    seeking?: (event: Event) => void;
+    stalled?: (event: Event) => void;
+    suspend?: (event: Event) => void;
+    timeupdate?: (event: Event) => void;
+    volumechange?: (event: Event) => void;
+    waiting?: (event: Event) => void;
+  };
 };
 
-export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
+export function NCPlayer(
+  { dismounter, on: listeners, controllerRef, ...rawProps }: PlayerProps,
+) {
   const props = signalize(rawProps);
   const {
     styles,
@@ -163,6 +208,7 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
     swipeControlRange,
     globalKeyListener,
     keySeekDuration,
+    controllerRef,
   );
 
   const videoElem = (
@@ -276,6 +322,20 @@ export function NCPlayer({ dismounter, ...rawProps }: PlayerProps) {
       </div>
     </div>
   ) as HTMLDivElement;
+
+  if (listeners) {
+    for (
+      const [event, listener] of Object.entries(listeners) as [
+        keyof typeof listeners,
+        (e: Event) => void,
+      ][]
+    ) {
+      videoElem.addEventListener(event, listener);
+      dismounter?.ondismount(() => {
+        videoElem.removeEventListener(event, listener);
+      });
+    }
+  }
 
   return ncplayerElem;
 }

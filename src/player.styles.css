@@ -4,6 +4,13 @@
     position: relative;
     width: fit-content;
     background-color: black;
+    max-width: 100%;
+    max-height: 100%;
+
+    & .main-player {
+        max-width: 100%;
+        max-height: 100%;
+    }
 
     & * {
         font-size: inherit;
@@ -16,6 +23,7 @@
 
     & div {
         display: flex;
+        flex-direction: row;
     }
 
     & .vjsx-if-container {
