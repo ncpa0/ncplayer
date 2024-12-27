@@ -7,6 +7,7 @@ import { SubtitleSelect } from "./components/subtitle-select";
 import { TimeDisplay } from "./components/time-display";
 import { VideoTrack } from "./components/video-track";
 import { VolumeControl } from "./components/volume-control";
+import { useGlobalEventController } from "./hooks/global-events-controller";
 import { usePlaybackControls } from "./hooks/playback-controls";
 import defaultStylesheet from "./player.styles.css";
 import { signalize } from "./utilities/signalize";
@@ -137,14 +138,6 @@ export type PlayerProps = {
    * user presses the left or right arrow keys.
    */
   keySeekDuration?: MaybeReadonlySignal<number | undefined>;
-  /**
-   * An interface that should expose a `ondismount` method that registers
-   * a listener. NCPlayer will register teardown callbacks to this interface.
-   */
-  dismounter?: Dismounter;
-  /** A reference to an object to which a controller will be assigned, can be
-   * used to programatically control the player. */
-  controllerRef?: ControllerRef;
   on?: {
     audioprocess?: (event: AudioProcessingEvent) => void;
     canplay?: (event: Event) => void;
@@ -173,8 +166,9 @@ export type PlayerProps = {
 };
 
 export function NCPlayer(
-  { dismounter, on: listeners, controllerRef, ...rawProps }: PlayerProps,
+  { on: listeners, ...rawProps }: PlayerProps,
 ) {
+  const cleanups: Array<Function> = [];
   const props = signalize(rawProps);
   const {
     styles,
@@ -189,6 +183,8 @@ export function NCPlayer(
     keySeekDuration,
   } = props;
 
+  const globalEvents = useGlobalEventController(cleanups);
+
   const {
     isFullscreen,
     isPLaying,
@@ -199,16 +195,16 @@ export function NCPlayer(
     handle,
     capturer,
     controls,
+    publicController,
   } = usePlaybackControls(
     () => videoElem,
     () => ncplayerElem,
-    dismounter,
+    globalEvents,
     controlsTimeout,
     persistentVolume,
     swipeControlRange,
     globalKeyListener,
     keySeekDuration,
-    controllerRef,
   );
 
   const videoElem = (
@@ -293,7 +289,7 @@ export function NCPlayer(
           previewWidth={props.previewWidth}
           previewHeight={props.previewHeight}
           previewUpdateThrottle={previewUpdateThrottle}
-          dismounter={dismounter}
+          globalEvents={globalEvents}
           onSeek={(newProgress) => {
             controls.seekProgress(newProgress);
           }}
@@ -307,13 +303,14 @@ export function NCPlayer(
           volume={volume}
           onVolumeChange={(v) => controls.setVolume(v)}
           onVolumeToggle={() => controls.toggleMute()}
-          dismounter={dismounter}
+          globalEvents={globalEvents}
         />
         <SubtitleSelect
           subtitles={subtitles}
           showControls={showControls}
           videoElem={videoElem}
-          dismounter={dismounter}
+          globalEvents={globalEvents}
+          addCleanup={c => cleanups.push(c)}
         />
         <FullscreenButton
           isFullscreen={isFullscreen}
@@ -331,11 +328,33 @@ export function NCPlayer(
       ][]
     ) {
       videoElem.addEventListener(event, listener);
-      dismounter?.ondismount(() => {
+      cleanups.push(() => {
         videoElem.removeEventListener(event, listener);
       });
     }
   }
 
-  return ncplayerElem;
+  function dispose() {
+    for (const cleanup of cleanups) {
+      cleanup();
+    }
+    ncplayerElem.remove();
+  }
+
+  Object.defineProperty(ncplayerElem, "dispose", {
+    value: dispose,
+  });
+
+  Object.defineProperty(ncplayerElem, "controller", {
+    value: publicController,
+  });
+
+  return ncplayerElem as HTMLDivElement & {
+    /**
+     * Disposes of the player, removing all event listeners and cleaning up
+     * any resources.
+     */
+    dispose(): void;
+    controller: PlayerController;
+  };
 }

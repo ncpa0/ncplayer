@@ -1,26 +1,29 @@
 import { Range } from "@ncpa0cpl/vanilla-jsx";
 import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import SubtitleIcon from "../assets/subtitles.svg";
+import { GlobalEventController } from "../hooks/global-events-controller";
 import { useSubtrackController } from "../hooks/subtrack-controller";
-import { Dismounter, SubtitleTrack } from "../player.component";
+import { SubtitleTrack } from "../player.component";
 
 export type SubtitleSelectProps = {
   subtitles: ReadonlySignal<Array<SubtitleTrack> | undefined>;
   showControls: ReadonlySignal<boolean>;
   videoElem: HTMLVideoElement;
-  dismounter?: Dismounter;
+  globalEvents: GlobalEventController;
+  addCleanup: (fn: Function) => void;
 };
 
 export function SubtitleSelect(
   props: SubtitleSelectProps,
 ) {
+  const { globalEvents } = props;
   const popoverVisible = sig(false);
 
   const { activeTrack, handleSubTrackSelect, handleSubTrackDisable } =
     useSubtrackController(
       props.videoElem,
       props.showControls,
-      props.dismounter,
+      props.addCleanup,
     );
 
   const handlePress = (e: MouseEvent) => {
@@ -45,10 +48,7 @@ export function SubtitleSelect(
     }
   };
 
-  window.addEventListener("click", onDocumentClick);
-  props.dismounter?.ondismount(() => {
-    window.removeEventListener("click", onDocumentClick);
-  });
+  globalEvents.on("click", onDocumentClick);
 
   const popover = (
     <div class="subtitle-selector-popover">

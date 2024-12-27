@@ -1,5 +1,5 @@
 import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
-import { Dismounter, SubtitleTrack } from "../player.component";
+import { SubtitleTrack } from "../player.component";
 import { countChar } from "../utilities/count-char";
 
 function liftCue(cue: VTTCue) {
@@ -25,7 +25,7 @@ function resetCues(cuesList?: TextTrackCueList | null) {
 export function useSubtrackController(
   videoElem: HTMLVideoElement,
   showControls: ReadonlySignal<boolean>,
-  dismounter?: Dismounter,
+  addCleanup: (fn: Function) => void,
 ) {
   const activeTrack = sig<null | string>(null);
 
@@ -90,7 +90,7 @@ export function useSubtrackController(
     }
   });
 
-  dismounter?.ondismount(() => {
+  addCleanup(() => {
     cleanup();
     listener.detach();
   });

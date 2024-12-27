@@ -1,8 +1,9 @@
 import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
-import { ControllerRef, Dismounter } from "../player.component";
+import { PlayerController } from "../player.component";
 import { clamp } from "../utilities/math";
 import { useFullscreenController } from "./fullscreen-controller";
+import { GlobalEventController } from "./global-events-controller";
 
 export interface VideoControls {
   togglePlay(): void;
@@ -32,13 +33,12 @@ const INTERACTABLE_TAGS = ["INPUT", "TEXTAREA", "BUTTON", "SELECT", "OPTION"];
 export function usePlaybackControls(
   getElem: () => HTMLVideoElement,
   getPlayerElem: () => HTMLElement,
-  dismounter: Dismounter | undefined,
+  globalEvents: GlobalEventController,
   controlsTimeout: ReadonlySignal<number | undefined>,
   persistentVolume: ReadonlySignal<boolean | undefined>,
   swipeControlRange: ReadonlySignal<number | undefined>,
   globalKeyListener: ReadonlySignal<boolean | undefined>,
   keySeekDuration: ReadonlySignal<number | undefined>,
-  controllerRef?: ControllerRef,
 ) {
   const volume = sig(getInitVolume(persistentVolume));
   const bufferProgress = sig(0);
@@ -49,7 +49,7 @@ export function usePlaybackControls(
 
   const fullscreenController = useFullscreenController(
     getPlayerElem,
-    dismounter,
+    globalEvents,
   );
 
   let lastKnownVolumeBeforeMute = 1;
@@ -330,10 +330,31 @@ export function usePlaybackControls(
     }
   };
 
-  document.addEventListener("keydown", handleKeyDown);
+  globalEvents.on("keydown", handleKeyDown, "document");
 
-  if (controllerRef) {
-    controllerRef.current = {
+  return {
+    isFullscreen: fullscreenController.isFullscreen,
+    progress,
+    isPLaying,
+    showControls,
+    volume,
+    bufferProgress,
+    controls,
+    handle: {
+      mouseMove: handleMouseMove,
+      mouseLeave: handleMouseLeave,
+      play: handlePlay,
+      pause: handlePause,
+      timeUpdate: handleTimeUpdate,
+      progress: handleProgress,
+    },
+    capturer: {
+      pointerUp: handleCapturePointerUp,
+      touchstart: handleCaptureTouchStart,
+      touchend: handleCaptureTouchEnd,
+      touchmove: handleCaptureTouchMove,
+    },
+    publicController: {
       play() {
         getElem().play();
       },
@@ -362,30 +383,6 @@ export function usePlaybackControls(
       video() {
         return getElem();
       },
-    };
-  }
-
-  return {
-    isFullscreen: fullscreenController.isFullscreen,
-    progress,
-    isPLaying,
-    showControls,
-    volume,
-    bufferProgress,
-    controls,
-    handle: {
-      mouseMove: handleMouseMove,
-      mouseLeave: handleMouseLeave,
-      play: handlePlay,
-      pause: handlePause,
-      timeUpdate: handleTimeUpdate,
-      progress: handleProgress,
-    },
-    capturer: {
-      pointerUp: handleCapturePointerUp,
-      touchstart: handleCaptureTouchStart,
-      touchend: handleCaptureTouchEnd,
-      touchmove: handleCaptureTouchMove,
-    },
+    } as PlayerController,
   };
 }

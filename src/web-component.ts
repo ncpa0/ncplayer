@@ -228,7 +228,7 @@ class NCPlayerWebComponent extends HTMLElement {
   }
 
   private __disconnectCallbacks: Function[] = [];
-  private __player!: HTMLDivElement;
+  private __player!: ReturnType<typeof NCPlayer>;
 
   constructor() {
     super();
@@ -476,11 +476,6 @@ class NCPlayerWebComponent extends HTMLElement {
           return subs;
         },
       ),
-      dismounter: {
-        ondismount: (fn) => {
-          this.__disconnectCallbacks.push(fn);
-        },
-      },
     });
 
     this.shadowRoot!.replaceChildren(this.__player);
@@ -509,6 +504,7 @@ class NCPlayerWebComponent extends HTMLElement {
     this.__disconnectCallbacks
       .splice(0, this.__disconnectCallbacks.length)
       .forEach((fn) => fn());
+    this.__player.dispose();
 
     this.mutObserver.disconnect();
   }

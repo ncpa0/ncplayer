@@ -1,6 +1,6 @@
 import { ReadonlySignal, sig, Signal } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
-import { Dismounter } from "../player.component";
+import { GlobalEventController } from "../hooks/global-events-controller";
 import { detectMobile } from "../utilities/detect-mobile";
 import { formatTime } from "../utilities/format-time";
 import { changeWithStep, clamp, toPrecision } from "../utilities/math";
@@ -15,10 +15,11 @@ export type VideoTrackProps = {
   previewHeight: ReadonlySignal<number | undefined>;
   previewUpdateThrottle: ReadonlySignal<number | undefined>;
   onSeek: (time: number) => void;
-  dismounter?: Dismounter;
+  globalEvents: GlobalEventController;
 };
 
 export function VideoTrack(props: VideoTrackProps) {
+  const { globalEvents } = props;
   const previewUpdateThrottle = props.previewUpdateThrottle;
 
   const bufferProgressBarStyle = props.bufferProgress.derive((p) => {
@@ -190,14 +191,8 @@ export function VideoTrack(props: VideoTrackProps) {
     },
   );
 
-  window.addEventListener("pointermove", handlePointerMove);
-  window.addEventListener("pointerup", handlePointerUp);
-
-  props.dismounter?.ondismount(() => {
-    window.removeEventListener("pointermove", handlePointerMove);
-    window.removeEventListener("pointerup", handlePointerUp);
-    previewPlayer.get()?.remove();
-  });
+  globalEvents.on("pointermove", handlePointerMove);
+  globalEvents.on("pointerup", handlePointerUp);
 
   const vtrack = (
     <div

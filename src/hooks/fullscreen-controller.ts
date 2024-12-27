@@ -1,10 +1,10 @@
 import { sig } from "@ncpa0cpl/vanilla-jsx/signals";
-import { Dismounter } from "../player.component";
 import { getFullScreenElement } from "../utilities/get-fullscreen-elem";
+import { GlobalEventController } from "./global-events-controller";
 
 export function useFullscreenController(
   getElem: () => HTMLElement,
-  dismounter?: Dismounter,
+  globalEvents: GlobalEventController,
 ) {
   const isFullscreen = sig(false);
 
@@ -28,19 +28,10 @@ export function useFullscreenController(
     }
   };
 
-  document.addEventListener("webkitfullscreenchange", handleFullscreenToggle);
-  document.addEventListener("mozfullscreenchange", handleFullscreenToggle);
-  document.addEventListener("MSFullscreenChange", handleFullscreenToggle);
-  document.addEventListener("fullscreenchange", handleFullscreenToggle);
-  dismounter?.ondismount(() => {
-    document.removeEventListener(
-      "webkitfullscreenchange",
-      handleFullscreenToggle,
-    );
-    document.removeEventListener("mozfullscreenchange", handleFullscreenToggle);
-    document.removeEventListener("MSFullscreenChange", handleFullscreenToggle);
-    document.removeEventListener("fullscreenchange", handleFullscreenToggle);
-  });
+  globalEvents.on("webkitfullscreenchange", handleFullscreenToggle, "document");
+  globalEvents.on("mozfullscreenchange", handleFullscreenToggle, "document");
+  globalEvents.on("MSFullscreenChange", handleFullscreenToggle, "document");
+  globalEvents.on("fullscreenchange", handleFullscreenToggle, "document");
 
   return {
     isFullscreen,

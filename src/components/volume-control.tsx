@@ -2,7 +2,7 @@ import { If } from "@ncpa0cpl/vanilla-jsx";
 import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx/signals";
 import VolumeMutedIcon from "../assets/volume-muted.svg";
 import VolumeIcon from "../assets/volume.svg";
-import { Dismounter } from "../player.component";
+import { GlobalEventController } from "../hooks/global-events-controller";
 import { changeWithStep, clamp, toPrecision } from "../utilities/math";
 import { stopEvent } from "../utilities/stop-event";
 
@@ -10,10 +10,12 @@ export type VolumeControlProps = {
   volume: ReadonlySignal<number>;
   onVolumeChange: (newVolume: number) => void;
   onVolumeToggle: () => void;
-  dismounter?: Dismounter;
+  globalEvents: GlobalEventController;
 };
 
 export function VolumeControl(props: VolumeControlProps) {
+  const { globalEvents } = props;
+
   const progressBarStyle = props.volume.derive((p) => {
     return `right: ${clamp((1 - p) * 100, 0, 100)}%;`;
   });
@@ -59,8 +61,8 @@ export function VolumeControl(props: VolumeControlProps) {
     }
   };
 
-  window.addEventListener("pointermove", handlePointerMove);
-  window.addEventListener("pointerup", handlePointerUp);
+  globalEvents.on("pointermove", handlePointerMove);
+  globalEvents.on("pointerup", handlePointerUp);
 
   const slider = (
     <div
