@@ -92,9 +92,47 @@ async function main() {
   const buildBase = () => build(bldOptions);
   const buildBundle = () =>
     build(bundleOptions).then(() => onBundleBuildComplete());
+  const buildStandaloneCss = () =>
+    buildCss({
+      src: p("src/player.styles.css"),
+      outFile: p("dist/styles.css"),
+      sourceMap: isDev,
+    });
 
-  await Promise.all([buildBase(), buildBundle()]);
+  await Promise.all([buildBase(), buildBundle(), buildStandaloneCss()]);
   await removeJsxteTypeImports();
+}
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+/**
+ * @param {{ src: string; sourceMap?: boolean; outFile?: string }} options
+ */
+async function buildCss(options) {
+  const file = await fs.readFile(options.src, "utf8");
+  const minifiedCss = await transform({
+    filename: options.src,
+    code: encoder.encode(file),
+    minify: true,
+    sourceMap: options.sourceMap,
+  });
+
+  let contents = decoder.decode(minifiedCss.code);
+
+  if (minifiedCss.map) {
+    // add the source map as inline comment
+    contents += `\n/*# sourceMappingURL=data:application/json;base64,${
+      Buffer.from(
+        minifiedCss.map,
+      ).toString("base64")
+    } */`;
+  }
+
+  if (options.outFile) {
+    await fs.writeFile(options.outFile, contents);
+  }
+
+  return contents;
 }
 
 /**
@@ -104,29 +142,12 @@ function CssMinifierPlugin() {
   return {
     name: "css-minifier",
     setup(build) {
-      const decoder = new TextDecoder();
-      const encoder = new TextEncoder();
-
       build.onLoad({ filter: /\.css$/ }, async (args) => {
         try {
-          const file = await fs.readFile(args.path, "utf8");
-          const minifiedCss = await transform({
-            filename: args.path,
-            code: encoder.encode(file),
-            minify: true,
+          let contents = await buildCss({
+            src: args.path,
             sourceMap: isDev,
           });
-
-          let contents = decoder.decode(minifiedCss.code);
-
-          if (minifiedCss.map) {
-            // add the source map as inline comment
-            contents += `\n/*# sourceMappingURL=data:application/json;base64,${
-              Buffer.from(
-                minifiedCss.map,
-              ).toString("base64")
-            } */`;
-          }
 
           return {
             contents,

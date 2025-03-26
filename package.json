@@ -17,7 +17,11 @@
     "./dist/bundle/index": {
       "types": "./dist/types/index.d.ts",
       "default": "./dist/bundle/index.js"
-    }
+    },
+    "./styles": "./dist/styles.css",
+    "./styles.css": "./dist/styles.css",
+    "./dist/styles": "./dist/styles.css",
+    "./dist/styles.css": "./dist/styles.css"
   },
   "keywords": [
     "player",

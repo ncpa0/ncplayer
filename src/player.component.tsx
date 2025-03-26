@@ -13,6 +13,8 @@ import defaultStylesheet from "./player.styles.css";
 import { signalize } from "./utilities/signalize";
 import { stopEvent } from "./utilities/stop-event";
 
+export { defaultStylesheet };
+
 export interface PlayerController {
   play(): void;
   pause(): void;
