@@ -9,7 +9,10 @@ export type FullscreenButtonProps = {
 
 export function FullscreenButton(props: FullscreenButtonProps) {
   return (
-    <button class="ctl-btn fullscreen-btn" onmousedown={props.onPress}>
+    <button
+      class="ctl-btn fullscreen-btn"
+      onclick={props.onPress}
+    >
       {props.isFullscreen.derive((isFullscreen) => {
         if (isFullscreen) {
           return (

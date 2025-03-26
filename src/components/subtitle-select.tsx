@@ -60,9 +60,9 @@ export function SubtitleSelect(
           <button
             class={{
               "subtitle-selector-item": true,
-              "active": activeTrack.derive(at => at === t.id),
+              "active": sig.eq(activeTrack, t.id),
             }}
-            onmousedown={(ev) => {
+            onclick={(ev) => {
               handleSubTrackSelect(t);
               popoverVisible.dispatch(false);
               ev.stopPropagation();
@@ -76,9 +76,9 @@ export function SubtitleSelect(
       <button
         class={{
           "subtitle-selector-item": true,
-          "active": activeTrack.derive(at => at === null),
+          "active": sig.eq(activeTrack, null),
         }}
-        onmousedown={handleSubTrackDisable}
+        onclick={handleSubTrackDisable}
       >
         None
       </button>
@@ -96,15 +96,15 @@ export function SubtitleSelect(
                 "subtitle-selector-btn": true,
                 "popover-visible": popoverVisible,
               }}
-              onmousedown={handlePress}
+              onclick={handlePress}
             >
               <div class="subtitle-selector-icon">
                 <SubtitleIcon />
               </div>
-              {popoverVisible.derive(v => v && popover)}
+              {popoverVisible.derive(v => v ? popover : <></>)}
             </button>
           )
-          : null
+          : <></>
       )}
     </div>
   );

@@ -56,6 +56,8 @@
         padding-inline: 0.30em;
         display: flex;
         justify-content: space-between;
+        container-type: inline-size;
+        container-name: ncplayer-controls;
 
         &.visible {
             opacity: 1;
@@ -208,7 +210,7 @@
         }
 
         & .volume-ctl-slider {
-            width: 8em;
+            width: min(8em, 10cqw);
             max-width: 10vw;
             min-height: 2em;
             border-radius: 6px;

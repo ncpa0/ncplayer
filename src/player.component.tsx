@@ -245,7 +245,7 @@ export function NCPlayer(
       class={{
         ncplayer: true,
         fullscreen: isFullscreen,
-        "hide-cursor": showControls.derive((show) => !show),
+        "hide-cursor": sig.not(showControls),
       }}
       onmousemove={handle.mouseMove}
       onmouseleave={handle.mouseLeave}
