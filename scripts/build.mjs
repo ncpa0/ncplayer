@@ -129,6 +129,10 @@ async function buildCss(options) {
   }
 
   if (options.outFile) {
+    // make sure the output directory exists
+    const outDir = path.dirname(options.outFile);
+    await fs.mkdir(outDir, { recursive: true });
+
     await fs.writeFile(options.outFile, contents);
   }
 
