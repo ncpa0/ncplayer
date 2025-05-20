@@ -355,6 +355,9 @@ export function usePlaybackControls(
       touchmove: handleCaptureTouchMove,
     },
     publicController: {
+      isReady() {
+        return !Number.isNaN(getElem().duration);
+      },
       play() {
         getElem().play();
       },
@@ -379,10 +382,25 @@ export function usePlaybackControls(
         videoElem.currentTime = 0;
         progress.dispatch(0);
         bufferProgress.dispatch(0);
+        isPLaying.dispatch(false);
       },
       video() {
         return getElem();
       },
-    } as PlayerController,
+      on(ev, listener) {
+        const elem = getElem();
+        elem.addEventListener(ev as string, listener as EventListener);
+        return () =>
+          elem.removeEventListener(ev as string, listener as EventListener);
+      },
+      once(ev, listener) {
+        const elem = getElem();
+        elem.addEventListener(ev as string, listener as EventListener, {
+          once: true,
+        });
+        return () =>
+          elem.removeEventListener(ev as string, listener as EventListener);
+      },
+    } satisfies PlayerController,
   };
 }

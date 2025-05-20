@@ -24,7 +24,48 @@ export interface PlayerController {
   toggleFullscreen(): void;
   reset(): void;
   video(): HTMLVideoElement;
+  isReady(): boolean;
+  on<E extends keyof PlayerEvents>(
+    event: E,
+    listener: PlayerEvents[E],
+  ): () => void;
+  once<E extends keyof PlayerEvents>(
+    event: E,
+    listener: PlayerEvents[E],
+  ): () => void;
 }
+
+type PlayerEvents = {
+  audioprocess: (event: VideoEvent<AudioProcessingEvent>) => void;
+  canplay: (event: VideoEvent) => void;
+  canplaythrough: (event: VideoEvent) => void;
+  complete: (event: VideoEvent) => void;
+  durationchange: (event: VideoEvent) => void;
+  emptied: (event: VideoEvent) => void;
+  ended: (event: VideoEvent) => void;
+  error: (event: VideoEvent) => void;
+  loadeddata: (event: VideoEvent) => void;
+  loadedmetadata: (event: VideoEvent) => void;
+  loadstart: (event: VideoEvent) => void;
+  pause: (event: VideoEvent) => void;
+  play: (event: VideoEvent) => void;
+  playing: (event: VideoEvent) => void;
+  progress: (event: VideoEvent) => void;
+  ratechange: (event: VideoEvent) => void;
+  seeked: (event: VideoEvent) => void;
+  seeking: (event: VideoEvent) => void;
+  stalled: (event: VideoEvent) => void;
+  suspend: (event: VideoEvent) => void;
+  timeupdate: (event: VideoEvent) => void;
+  volumechange: (event: VideoEvent) => void;
+  waiting: (event: VideoEvent) => void;
+  waitingforkey: (event: VideoEvent) => void;
+  abort: (event: VideoEvent) => void;
+  encrypted: (event: VideoEvent<MediaEncryptedEvent>) => void;
+  enterpictureinpicture: (event: VideoEvent<PictureInPictureEvent>) => void;
+  leavepictureinpicture: (event: VideoEvent<PictureInPictureEvent>) => void;
+  resize: (event: VideoEvent) => void;
+};
 
 export type ControllerRef = { current: PlayerController } | {
   current?: PlayerController | null;
@@ -47,6 +88,10 @@ export type SubtitleTrack = {
 
 export type Dismounter = {
   ondismount(fn: Function): void;
+};
+
+type VideoEvent<Base = Event> = Base & {
+  target: HTMLVideoElement;
 };
 
 export type PlayerProps = {
@@ -140,31 +185,7 @@ export type PlayerProps = {
    * user presses the left or right arrow keys.
    */
   keySeekDuration?: MaybeReadonlySignal<number | undefined>;
-  on?: {
-    audioprocess?: (event: AudioProcessingEvent) => void;
-    canplay?: (event: Event) => void;
-    canplaythrough?: (event: Event) => void;
-    complete?: (event: Event) => void;
-    durationchange?: (event: Event) => void;
-    emptied?: (event: Event) => void;
-    ended?: (event: Event) => void;
-    error?: (event: Event) => void;
-    loadeddata?: (event: Event) => void;
-    loadedmetadata?: (event: Event) => void;
-    loadstart?: (event: Event) => void;
-    pause?: (event: Event) => void;
-    play?: (event: Event) => void;
-    playing?: (event: Event) => void;
-    progress?: (event: Event) => void;
-    ratechange?: (event: Event) => void;
-    seeked?: (event: Event) => void;
-    seeking?: (event: Event) => void;
-    stalled?: (event: Event) => void;
-    suspend?: (event: Event) => void;
-    timeupdate?: (event: Event) => void;
-    volumechange?: (event: Event) => void;
-    waiting?: (event: Event) => void;
-  };
+  on?: Partial<PlayerEvents>;
 };
 
 export function NCPlayer(
