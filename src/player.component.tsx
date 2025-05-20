@@ -35,7 +35,7 @@ export interface PlayerController {
   ): () => void;
 }
 
-type PlayerEvents = {
+export type PlayerEvents = {
   audioprocess: (event: VideoEvent<AudioProcessingEvent>) => void;
   canplay: (event: VideoEvent) => void;
   canplaythrough: (event: VideoEvent) => void;
@@ -90,8 +90,15 @@ export type Dismounter = {
   ondismount(fn: Function): void;
 };
 
-type VideoEvent<Base = Event> = Base & {
+export type VideoEvent<Base = Event> = Base & {
   target: HTMLVideoElement;
+};
+
+export type CustomControlButton = {
+  index: number;
+  content: string | Element;
+  class?: string;
+  onClick?: () => void;
 };
 
 export type PlayerProps = {
@@ -185,6 +192,22 @@ export type PlayerProps = {
    * user presses the left or right arrow keys.
    */
   keySeekDuration?: MaybeReadonlySignal<number | undefined>;
+  /**
+   * Custom control elements that will be displayed on the bottom bar.
+   * Each custom element will be inserted into the bar at the specified index,
+   * initial indexes of the default control elements are:
+   * - 0: Play/Pause button
+   * - 1: Progress track
+   * - 2: Time display
+   * - 3: Volume Controll
+   * - 4: Subtitle selection
+   * - 5: Fullscreen button
+   *
+   * Note that inserting an element will shift all the following elements index
+   * by one (ex. after adding elem at index 4, `Subtitle selection` moves to
+   * index 5, and `Fullscreen button` to index 6.)
+   */
+  customControls?: MaybeReadonlySignal<CustomControlButton[] | undefined>;
   on?: Partial<PlayerEvents>;
 };
 
@@ -204,6 +227,7 @@ export function NCPlayer(
     swipeControlRange,
     globalKeyListener,
     keySeekDuration,
+    customControls,
   } = props;
 
   const globalEvents = useGlobalEventController(cleanups);
@@ -263,6 +287,48 @@ export function NCPlayer(
     </video>
   ) as HTMLVideoElement;
 
+  const controlsElems = [
+    <StartButton
+      video={videoElem}
+      playing={isPLaying}
+    />,
+    <VideoTrack
+      video={videoElem}
+      progress={progress}
+      bufferProgress={bufferProgress}
+      preview={preview}
+      previewWidth={props.previewWidth}
+      previewHeight={props.previewHeight}
+      previewUpdateThrottle={previewUpdateThrottle}
+      globalEvents={globalEvents}
+      onSeek={(newProgress) => {
+        controls.seekProgress(newProgress);
+      }}
+    />,
+    <TimeDisplay
+      progress={progress}
+      isVisible={showControls}
+      videoElement={videoElem}
+    />,
+    <VolumeControl
+      volume={volume}
+      onVolumeChange={(v) => controls.setVolume(v)}
+      onVolumeToggle={() => controls.toggleMute()}
+      globalEvents={globalEvents}
+    />,
+    <SubtitleSelect
+      subtitles={subtitles}
+      showControls={showControls}
+      videoElem={videoElem}
+      globalEvents={globalEvents}
+      addCleanup={c => cleanups.push(c)}
+    />,
+    <FullscreenButton
+      isFullscreen={isFullscreen}
+      onPress={() => controls.toggleFullscreen()}
+    />,
+  ];
+
   const ncplayerElem = (
     <div
       class={{
@@ -300,45 +366,24 @@ export function NCPlayer(
           playing: isPLaying,
         }}
       >
-        <StartButton
-          video={videoElem}
-          playing={isPLaying}
-        />
-        <VideoTrack
-          video={videoElem}
-          progress={progress}
-          bufferProgress={bufferProgress}
-          preview={preview}
-          previewWidth={props.previewWidth}
-          previewHeight={props.previewHeight}
-          previewUpdateThrottle={previewUpdateThrottle}
-          globalEvents={globalEvents}
-          onSeek={(newProgress) => {
-            controls.seekProgress(newProgress);
-          }}
-        />
-        <TimeDisplay
-          progress={progress}
-          isVisible={showControls}
-          videoElement={videoElem}
-        />
-        <VolumeControl
-          volume={volume}
-          onVolumeChange={(v) => controls.setVolume(v)}
-          onVolumeToggle={() => controls.toggleMute()}
-          globalEvents={globalEvents}
-        />
-        <SubtitleSelect
-          subtitles={subtitles}
-          showControls={showControls}
-          videoElem={videoElem}
-          globalEvents={globalEvents}
-          addCleanup={c => cleanups.push(c)}
-        />
-        <FullscreenButton
-          isFullscreen={isFullscreen}
-          onPress={() => controls.toggleFullscreen()}
-        />
+        {customControls.derive(customControls => {
+          const elems = controlsElems.slice();
+          if (customControls) {
+            for (const customBtn of customControls) {
+              elems.splice(
+                customBtn.index,
+                0,
+                <button
+                  class={["ctl-btn", "custom-btn", customBtn.class]}
+                  onclick={customBtn.onClick}
+                >
+                  {customBtn.content}
+                </button>,
+              );
+            }
+          }
+          return elems;
+        })}
       </div>
     </div>
   ) as HTMLDivElement;
