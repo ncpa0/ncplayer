@@ -15,6 +15,7 @@ export type VideoTrackProps = {
   previewHeight: ReadonlySignal<number | undefined>;
   previewUpdateThrottle: ReadonlySignal<number | undefined>;
   onSeek: (time: number) => void;
+  onWheel: (e: WheelEvent) => void;
   globalEvents: GlobalEventController;
 };
 
@@ -203,6 +204,7 @@ export function VideoTrack(props: VideoTrackProps) {
       onmouseenter={previewHandlers.derive((h) => h.handleMouseEnter)}
       onmouseleave={previewHandlers.derive((h) => h.handleMouseLeave)}
       onpointermove={stopEvent}
+      onwheel={props.onWheel}
       ondrag={stopEvent}
       tabIndex={1}
       role="slider"

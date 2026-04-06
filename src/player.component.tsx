@@ -189,7 +189,7 @@ export type PlayerProps = {
   globalKeyListener?: MaybeReadonlySignal<boolean | undefined>;
   /**
    * The duration in seconds that the player should seek when the
-   * user presses the left or right arrow keys.
+   * user presses the left or right arrow keys. (Default: 5 sec)
    */
   keySeekDuration?: MaybeReadonlySignal<number | undefined>;
   /**
@@ -209,6 +209,17 @@ export type PlayerProps = {
    */
   customControls?: MaybeReadonlySignal<CustomControlButton[] | undefined>;
   on?: Partial<PlayerEvents>;
+  /**
+   * off - do not seek when scrolling
+   * all - seek on a mouse wheel scroll anywhere within the player
+   * track - seek on a mouse wheel scroll on the player's time track
+   */
+  scrollSeeking?: MaybeReadonlySignal<"off" | "all" | "track">;
+  /**
+   * The duration in seconds that the player should seek when the
+   * user scrolls the mouse wheel. (Default: )
+   */
+  scrollSeekDuration?: MaybeReadonlySignal<number | undefined>;
 };
 
 export function NCPlayer(
@@ -228,6 +239,8 @@ export function NCPlayer(
     globalKeyListener,
     keySeekDuration,
     customControls,
+    scrollSeeking,
+    scrollSeekDuration,
   } = props;
 
   const globalEvents = useGlobalEventController(cleanups);
@@ -242,17 +255,20 @@ export function NCPlayer(
     handle,
     capturer,
     controls,
+    track,
     publicController,
-  } = usePlaybackControls(
-    () => videoElem,
-    () => ncplayerElem,
-    globalEvents,
-    controlsTimeout,
-    persistentVolume,
-    swipeControlRange,
-    globalKeyListener,
-    keySeekDuration,
-  );
+  } = usePlaybackControls({
+    getElem: () => videoElem,
+    getPlayerElem: () => ncplayerElem,
+    globalEvents: globalEvents,
+    controlsTimeout: controlsTimeout,
+    persistentVolume: persistentVolume,
+    swipeControlRange: swipeControlRange,
+    globalKeyListener: globalKeyListener,
+    keySeekDuration: keySeekDuration,
+    scrollSeeking: scrollSeeking,
+    scrollSeekDuration: scrollSeekDuration,
+  });
 
   const videoElem = (
     <video
@@ -304,6 +320,7 @@ export function NCPlayer(
       onSeek={(newProgress) => {
         controls.seekProgress(newProgress);
       }}
+      onWheel={track.wheel}
     />,
     <TimeDisplay
       progress={progress}
@@ -355,6 +372,7 @@ export function NCPlayer(
         ontouchend={capturer.touchend}
         ontouchcancel={capturer.touchend}
         onpointerup={capturer.pointerUp}
+        onwheel={capturer.wheel}
         oncontextmenu={stopEvent}
         tabIndex={1}
         role="button"

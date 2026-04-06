@@ -1,6 +1,7 @@
 import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
 import { PlayerController } from "../player.component";
+import { callLimit } from "../utilities/call-limit";
 import { clamp } from "../utilities/math";
 import { useFullscreenController } from "./fullscreen-controller";
 import { GlobalEventController } from "./global-events-controller";
@@ -30,16 +31,31 @@ function getInitVolume(
 
 const INTERACTABLE_TAGS = ["INPUT", "TEXTAREA", "BUTTON", "SELECT", "OPTION"];
 
-export function usePlaybackControls(
-  getElem: () => HTMLVideoElement,
-  getPlayerElem: () => HTMLElement,
-  globalEvents: GlobalEventController,
-  controlsTimeout: ReadonlySignal<number | undefined>,
-  persistentVolume: ReadonlySignal<boolean | undefined>,
-  swipeControlRange: ReadonlySignal<number | undefined>,
-  globalKeyListener: ReadonlySignal<boolean | undefined>,
-  keySeekDuration: ReadonlySignal<number | undefined>,
-) {
+export function usePlaybackControls(params: {
+  getElem: () => HTMLVideoElement;
+  getPlayerElem: () => HTMLElement;
+  globalEvents: GlobalEventController;
+  controlsTimeout: ReadonlySignal<number | undefined>;
+  persistentVolume: ReadonlySignal<boolean | undefined>;
+  swipeControlRange: ReadonlySignal<number | undefined>;
+  globalKeyListener: ReadonlySignal<boolean | undefined>;
+  keySeekDuration: ReadonlySignal<number | undefined>;
+  scrollSeeking: ReadonlySignal<"off" | "all" | "track" | undefined>;
+  scrollSeekDuration: ReadonlySignal<number | undefined>;
+}) {
+  const {
+    controlsTimeout,
+    getElem,
+    getPlayerElem,
+    globalEvents,
+    globalKeyListener,
+    keySeekDuration,
+    persistentVolume,
+    swipeControlRange,
+    scrollSeeking,
+    scrollSeekDuration,
+  } = params;
+
   const volume = sig(getInitVolume(persistentVolume));
   const bufferProgress = sig(0);
   const progress = sig(0);
@@ -280,6 +296,42 @@ export function usePlaybackControls(
     { leading: true, trailing: true },
   );
 
+  const wheelScrollForward = callLimit(
+    () => {
+      controls.seekForward(scrollSeekDuration.get() ?? 5);
+    },
+    250,
+  );
+
+  const wheelScrollBackward = callLimit(
+    () => {
+      controls.seekBackward(scrollSeekDuration.get() ?? 5);
+    },
+    250,
+  );
+
+  const handleCapturWheel = (e: WheelEvent) => {
+    if (scrollSeeking.get() === "all") {
+      e.preventDefault();
+      if (e.deltaY > 0) {
+        wheelScrollBackward();
+      } else if (e.deltaY < 0) {
+        wheelScrollForward();
+      }
+    }
+  };
+
+  const handleTrackWheel = (e: WheelEvent) => {
+    if (scrollSeeking.get() === "track") {
+      e.preventDefault();
+      if (e.deltaY > 0) {
+        wheelScrollBackward();
+      } else if (e.deltaY < 0) {
+        wheelScrollForward();
+      }
+    }
+  };
+
   // Key controls
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -353,6 +405,10 @@ export function usePlaybackControls(
       touchstart: handleCaptureTouchStart,
       touchend: handleCaptureTouchEnd,
       touchmove: handleCaptureTouchMove,
+      wheel: handleCapturWheel,
+    },
+    track: {
+      wheel: handleTrackWheel,
     },
     publicController: {
       isReady() {
