@@ -2,11 +2,10 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ES6",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "downlevelIteration": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUncheckedIndexedAccess": true,
@@ -18,7 +17,5 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@ncpa0cpl/vanilla-jsx"
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }
