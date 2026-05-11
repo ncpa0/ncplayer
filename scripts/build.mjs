@@ -39,10 +39,11 @@ function onBundleBuildComplete() {
   fs.rename(
     p("dist/bundle/esm/index.mjs"),
     p("dist/bundle/index.js"),
-  );
-  fs.rm(p("dist/bundle/esm"), {
-    recursive: true,
-  }).catch(() => {});
+  ).then(() =>
+    fs.rm(p("dist/bundle/esm"), {
+      recursive: true,
+    })
+  ).catch(() => {});
 }
 
 async function main() {
