@@ -16,6 +16,8 @@ export type VideoTrackProps = {
   previewUpdateThrottle: ReadonlySignal<number | undefined>;
   onSeek: (time: number) => void;
   onWheel: (e: WheelEvent) => void;
+  onMouseEnter: (e: MouseEvent) => void;
+  onMouseLeave: (e: MouseEvent) => void;
   globalEvents: GlobalEventController;
 };
 
@@ -150,7 +152,7 @@ export function VideoTrack(props: VideoTrackProps) {
         }
       };
 
-      const handleMouseMove = (e: MouseEvent) => {
+      const handleMouseMove = (e: MouseEvent & { target: HTMLDivElement }) => {
         if (!isOver) return;
 
         const trackRect = vtrack.getBoundingClientRect();
@@ -185,8 +187,14 @@ export function VideoTrack(props: VideoTrackProps) {
       timePreview.onmouseenter = handlePreviewMouseover;
 
       return {
-        handleMouseEnter,
-        handleMouseLeave,
+        handleMouseEnter(e: MouseEvent) {
+          handleMouseEnter();
+          props.onMouseEnter(e);
+        },
+        handleMouseLeave(e: MouseEvent) {
+          handleMouseLeave();
+          props.onMouseLeave(e);
+        },
         handleMouseMove,
       };
     },
@@ -200,9 +208,9 @@ export function VideoTrack(props: VideoTrackProps) {
       class="video-track"
       draggable={false}
       onpointerdown={handlePointerDown}
-      onmousemove={previewHandlers.derive((h) => h.handleMouseMove)}
-      onmouseenter={previewHandlers.derive((h) => h.handleMouseEnter)}
-      onmouseleave={previewHandlers.derive((h) => h.handleMouseLeave)}
+      onmousemove={previewHandlers.$prop("handleMouseMove")}
+      onmouseenter={previewHandlers.$prop("handleMouseEnter")}
+      onmouseleave={previewHandlers.$prop("handleMouseLeave")}
       onpointermove={stopEvent}
       onwheel={props.onWheel}
       ondrag={stopEvent}

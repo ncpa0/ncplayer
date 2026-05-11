@@ -321,6 +321,8 @@ export function NCPlayer(
         controls.seekProgress(newProgress);
       }}
       onWheel={track.wheel}
+      onMouseEnter={track.mouseenter}
+      onMouseLeave={track.mouseleave}
     />,
     <TimeDisplay
       progress={progress}

@@ -321,13 +321,27 @@ export function usePlaybackControls(params: {
     }
   };
 
+  let trackMouseEnteredAt = -1;
+
+  const handleTrackMouseEnter = () => {
+    if (scrollSeeking.get() === "track") {
+      trackMouseEnteredAt = Date.now();
+    }
+  };
+
+  const handleTrackMouseLeave = () => {
+    trackMouseEnteredAt = -1;
+  };
+
   const handleTrackWheel = (e: WheelEvent) => {
     if (scrollSeeking.get() === "track") {
-      e.preventDefault();
-      if (e.deltaY > 0) {
-        wheelScrollBackward();
-      } else if (e.deltaY < 0) {
-        wheelScrollForward();
+      if (trackMouseEnteredAt > 0 && Date.now() - trackMouseEnteredAt > 500) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+          wheelScrollBackward();
+        } else if (e.deltaY < 0) {
+          wheelScrollForward();
+        }
       }
     }
   };
@@ -409,6 +423,8 @@ export function usePlaybackControls(params: {
     },
     track: {
       wheel: handleTrackWheel,
+      mouseenter: handleTrackMouseEnter,
+      mouseleave: handleTrackMouseLeave,
     },
     publicController: {
       isReady() {

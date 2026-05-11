@@ -5,7 +5,7 @@
     "": {
       "name": "ncplayer",
       "dependencies": {
-        "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.35",
+        "@ncpa0cpl/vanilla-jsx": "^0.0.1-alpha.45",
         "lodash.throttle": "^4.1.1",
       },
       "devDependencies": {
@@ -104,7 +104,7 @@
 
     "@ncpa0cpl/nodepack": ["@ncpa0cpl/nodepack@2.3.6", "", { "dependencies": { "@ncpa0cpl/node-worker-bridge": "^0.0.3", "@ts-morph/bootstrap": "^0.23.0", "chokidar": "^3.5.3", "dilswer": "2.1.1", "lodash.mergewith": "^4.6.2", "node-os-walk": ">=1.0.2", "pretty-error": "^4.0.0" }, "optionalDependencies": { "json-to-ts": "^1.7.0" }, "peerDependencies": { "esbuild": ">0.25.11" } }, "sha512-tDGB4fl68ehXtoD/Vf/tvnnMW+e51YlRmpTMdPB5BCJvjznnmX3wj8zqwI3KF9q1o17/hmIuL9Jx2rXi+zt9gw=="],
 
-    "@ncpa0cpl/vanilla-jsx": ["@ncpa0cpl/vanilla-jsx@0.0.1-alpha.35", "", { "dependencies": { "html-element-attributes": "^3.4.0" } }, "sha512-Cp17raqjwRQlbgznVIvY1Ui7TFnbk2oAsn6EiyJs0srlU68isyAoEDe9SMRp93VqvweSG/PsDZOsocb3wD8RXg=="],
+    "@ncpa0cpl/vanilla-jsx": ["@ncpa0cpl/vanilla-jsx@0.0.1-alpha.45", "", { "dependencies": { "html-element-attributes": "^3.4.0", "immer": "^10.1.1" } }, "sha512-YezXfKt6RNz1y8EU/IJYc1czjxnpOC/RD9+D1T7FVGroqCBJsHtNRSdP61uzG75VbeoOCfZ4DTgGWrqKTlDWuQ=="],
 
     "@nodelib/fs.scandir": ["@nodelib/fs.scandir@2.1.5", "", { "dependencies": { "@nodelib/fs.stat": "2.0.5", "run-parallel": "^1.1.9" } }, "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g=="],
 
@@ -269,6 +269,8 @@
     "htmlparser2": ["htmlparser2@6.1.0", "", { "dependencies": { "domelementtype": "^2.0.1", "domhandler": "^4.0.0", "domutils": "^2.5.2", "entities": "^2.0.0" } }, "sha512-gyyPk6rgonLFEDGoeRgQNaEUvdJ4ktTmmUh/h2t7s+M8oPpIPxgNACWa+6ESR57kXstwqPiCut0V8NRpcwgU7A=="],
 
     "husky": ["husky@8.0.3", "", { "bin": { "husky": "lib/bin.js" } }, "sha512-+dQSyqPh4x1hlO1swXBiNb2HzTDN1I2IGLQx1GrBuiqFJfoMrnZWwVmatvSiO+Iz8fBUnf+lekwNo4c2LlXItg=="],
+
+    "immer": ["immer@10.2.0", "", {}, "sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw=="],
 
     "inherits": ["inherits@2.0.4", "", {}, "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ=="],
 
