@@ -2,8 +2,12 @@ import { MaybeReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import { FullscreenButton } from "./components/fullscreen-button";
 import { VideoSources } from "./components/sources";
 import { StartButton } from "./components/start-button";
+import {
+  getInitSubSettings,
+  SubtitleSettingsBtn,
+} from "./components/sub-settings";
 import { VideoSubTracks } from "./components/sub-tracks";
-import { SubtitleSelect } from "./components/subtitle-select";
+import { SubtitleSelect, SubtitleSettings } from "./components/subtitle-select";
 import { TimeDisplay } from "./components/time-display";
 import { VideoTrack } from "./components/video-track";
 import { VolumeControl } from "./components/volume-control";
@@ -220,6 +224,7 @@ export type PlayerProps = {
    * user scrolls the mouse wheel. (Default: )
    */
   scrollSeekDuration?: MaybeReadonlySignal<number | undefined>;
+  customSubtitleDisplay?: MaybeReadonlySignal<boolean | undefined>;
 };
 
 export function NCPlayer(
@@ -241,9 +246,20 @@ export function NCPlayer(
     customControls,
     scrollSeeking,
     scrollSeekDuration,
+    customSubtitleDisplay,
   } = props;
 
   const globalEvents = useGlobalEventController(cleanups);
+
+  const subSettings = sig<SubtitleSettings>(
+    getInitSubSettings(persistentVolume),
+  );
+
+  subSettings.add(s => {
+    if (persistentVolume.get()) {
+      localStorage.setItem("ncplayer-sub-settings", JSON.stringify(s));
+    }
+  });
 
   const {
     isFullscreen,
@@ -299,9 +315,19 @@ export function NCPlayer(
       })}
     >
       {VideoSources({ sources })}
-      {VideoSubTracks({ subtitles })}
+      {sig.and(sig.not(customSubtitleDisplay), VideoSubTracks({ subtitles }))}
     </video>
   ) as HTMLVideoElement;
+
+  const subs = SubtitleSelect({
+    subtitles: subtitles,
+    showControls: showControls,
+    videoElem: videoElem,
+    globalEvents: globalEvents,
+    addCleanup: c => cleanups.push(c),
+    customSubtitleDisplay: customSubtitleDisplay,
+    subSettings,
+  });
 
   const controlsElems = [
     <StartButton
@@ -335,12 +361,11 @@ export function NCPlayer(
       onVolumeToggle={() => controls.toggleMute()}
       globalEvents={globalEvents}
     />,
-    <SubtitleSelect
-      subtitles={subtitles}
-      showControls={showControls}
-      videoElem={videoElem}
+    subs.controlElement,
+    <SubtitleSettingsBtn
+      enabled={customSubtitleDisplay}
+      settings={subSettings}
       globalEvents={globalEvents}
-      addCleanup={c => cleanups.push(c)}
     />,
     <FullscreenButton
       isFullscreen={isFullscreen}
@@ -379,6 +404,7 @@ export function NCPlayer(
         tabIndex={1}
         role="button"
       />
+      {subs.subsOut}
       <div
         class={{
           controls: true,

@@ -1,3 +1,8 @@
+/*text-shadow: var(--n) var(--n) 0 #000, var(--outline) var(--n) 0
+                #000, var(--n) var(--outline) 0 #000, var(--outline)
+                var(--outline) 0 #000;*/
+/* solid outline */
+/* soft shadow (bottom-right, longer) */
 .ncplayer {
     display: flex;
     justify-content: center;
@@ -6,6 +11,8 @@
     background-color: black;
     max-width: 100%;
     max-height: 100%;
+    container-type: size;
+    container-name: ncplayer;
 
     & .main-player {
         max-width: 100%;
@@ -39,7 +46,7 @@
         top: 0;
         height: calc(100% - 4em);
         width: 100%;
-        z-index: 2;
+        z-index: 5;
     }
 
     & .controls {
@@ -51,7 +58,7 @@
         background-color: rgba(0, 0, 0, 0.5);
         opacity: 0;
         transition: opacity 0.3s;
-        z-index: 2;
+        z-index: 5;
         align-items: center;
         padding-inline: 0.30em;
         display: flex;
@@ -67,7 +74,7 @@
             background-color: transparent;
             border: none;
             outline: none;
-            padding-inline: .5em;
+            padding-inline: .35em;
             margin-bottom: .3em;
             margin-inline: .25em;
 
@@ -179,7 +186,7 @@
             display: flex;
             align-items: center;
             margin-left: .5em;
-            margin-right: .75em;
+            margin-right: 1.3em;
 
             & .volume-ctl-icon {
                 margin-top: .1em;
@@ -312,5 +319,124 @@
 
     & .display-contents {
         display: contents;
+    }
+
+    & .subtitles-container {
+        position: absolute;
+        inset: .5em;
+        z-index: 2;
+        overflow: hidden;
+
+        & .subtitle-line {
+            --fsize: 3cqw;
+            --txtclr: white;
+            --outlineclr: #000;
+            --outlinesize: 0.04;
+            font-size: var(--fsize);
+            position: absolute;
+            height: fit-content;
+            width: fit-content;
+            max-width: 100%;
+
+            & .subtitle-text-block {
+                user-select: none;
+                margin: unset;
+                color: var(--txtclr);
+                font-family: var(--font, Verdana), Verdana, Tahoma, Arial,
+                sans-serif;
+                --p: calc(var(--fsize) * var(--outlinesize));
+                --n: calc(-1 * var(--p));
+                text-shadow: var(--n) var(--n) 0 var(--outlineclr), var(--p)
+                var(--n) 0 var(--outlineclr), var(--n) var(--p) 0
+                var(--outlineclr), var(--p) var(--p) 0 var(--outlineclr),
+                var(--n) 0 0 var(--outlineclr), var(--p) 0 0 var(--outlineclr),
+                0 var(--n) 0 var(--outlineclr), 0 var(--p) 0 var(--outlineclr),
+                calc(var(--p) * 2) calc(var(--p) * 2) calc(var(--p) * 1.5)
+                rgba(0, 0, 0, 0.8);
+
+                &.sub-bold {
+                    font-weight: bold;
+                }
+
+                &.sub-italic {
+                    font-style: italic;
+                }
+
+                &.sub-underline {
+                    text-decoration: underline;
+                }
+            }
+        }
+    }
+
+    & .subtitle-settings-modal {
+        display: none;
+
+        &.visible {
+            display: flex;
+        }
+    }
+
+    & .subtitle-settings-popover {
+        color: white;
+        display: none;
+        align-items: center;
+        font-family: monospace;
+
+        &.visible {
+            display: grid;
+        }
+
+        grid-template-columns: auto 1fr;
+        row-gap: .6em;
+        column-gap: .4em;
+        position: absolute;
+        bottom: 5em;
+        right: 1em;
+        background-color: #000000c4;
+        padding: .6em;
+
+        & .sub-settings-header {
+            grid-column: 1 / -1;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        & .fontsize-preview {
+            min-width: 4em;
+            text-align: center;
+            line-height: 2em;
+        }
+
+        & .subsettbtn {
+            color: white;
+            background-color: #5b5b5b;
+            border: none;
+            outline: none;
+            border-radius: 3px;
+            font-family: monospace;
+
+            &.fontsizebtn {
+                font-size: 1.4em;
+            }
+
+            &:active {
+                background-color: #363636;
+            }
+        }
+
+        & .subsettinput {
+            background-color: #5b5b5b;
+            color: white;
+            border: none;
+            outline: none;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        & .settings-entry {
+            padding: .4em;
+            display: contents;
+        }
     }
 }
