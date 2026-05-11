@@ -47,7 +47,8 @@
     "build": "bun ./scripts/build.mjs",
     "prepack": "bun run build",
     "servedev": "goserve --nocache --aw --redirect index.html ./dist",
-    "watch": "bun run build --dev --watch & bun run servedev && fg"
+    "watch": "bun run build --dev --watch & bun run servedev && fg",
+    "release": "git switch release && git rebase master && git push --force && git switch master"
   },
   "files": [
     "dist",
