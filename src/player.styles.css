@@ -264,19 +264,20 @@
         & .subtitle-selector-btn {
             & .subtitle-selector-popover {
                 position: absolute;
-                background-color: rgba(0, 0, 0, 0.5);
-                bottom: calc(4em + 8px);
-                right: 1.4em;
+                bottom: 5em;
+                right: 1em;
+                background-color: #313131ab;
                 display: flex;
                 flex-direction: column;
-                border-radius: 6px;
+                border-radius: 4px;
 
                 & .subtitle-selector-item {
                     background: transparent;
                     border: unset;
                     outline: unset;
                     color: white;
-                    font-size: 1.6em;
+                    font-size: 1.4em;
+                    font-family: monospace, Arial, monospace;
                     padding: .4em 0.8em;
 
                     &.active {
@@ -321,7 +322,6 @@
 
     & .subtitles-container {
         position: absolute;
-        inset: .5em;
         z-index: 2;
         overflow: hidden;
         container-type: size;
@@ -332,11 +332,25 @@
             --txtclr: white;
             --outlineclr: #000;
             --outlinesize: 0.04;
+            --font: Verdana;
             font-size: var(--fsize);
             position: absolute;
             height: fit-content;
             width: fit-content;
             max-width: 100%;
+            left: 0;
+            right: 0;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+
+            & .subtitle-subline {
+                display: block;
+                width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+                width: fit-content;
+            }
 
             & .subtitle-text-block {
                 user-select: none;
@@ -369,7 +383,7 @@
         }
     }
 
-    & .subtitle-settings-modal {
+    & .subtitle-settings {
         display: none;
 
         &.visible {
@@ -381,7 +395,9 @@
         color: white;
         display: none;
         align-items: center;
-        font-family: monospace;
+        font-family: monospace, Arial, monospace;
+        font-size: 1em;
+        border-radius: 4px;
 
         &.visible {
             display: grid;
@@ -393,8 +409,8 @@
         position: absolute;
         bottom: 5em;
         right: 1em;
-        background-color: #000000c4;
-        padding: .6em;
+        background-color: #313131ab;
+        padding: .8em;
 
         & .sub-settings-header {
             grid-column: 1 / -1;

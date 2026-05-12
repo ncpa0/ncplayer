@@ -4,6 +4,7 @@ import { VideoSources } from "./components/sources";
 import { StartButton } from "./components/start-button";
 import {
   getInitSubSettings,
+  SUB_DEFAULTS,
   SubtitleSettingsBtn,
 } from "./components/sub-settings";
 import { VideoSubTracks } from "./components/sub-tracks";
@@ -225,10 +226,11 @@ export type PlayerProps = {
    */
   scrollSeekDuration?: MaybeReadonlySignal<number | undefined>;
   customSubtitleDisplay?: MaybeReadonlySignal<boolean | undefined>;
+  defaultSubSettings?: Partial<typeof SUB_DEFAULTS>;
 };
 
 export function NCPlayer(
-  { on: listeners, ...rawProps }: PlayerProps,
+  { on: listeners, defaultSubSettings, ...rawProps }: PlayerProps,
 ) {
   const cleanups: Array<Function> = [];
   const props = signalize(rawProps);
@@ -252,7 +254,7 @@ export function NCPlayer(
   const globalEvents = useGlobalEventController(cleanups);
 
   const subSettings = sig<SubtitleSettings>(
-    getInitSubSettings(persistentVolume),
+    getInitSubSettings(persistentVolume, defaultSubSettings),
   );
 
   subSettings.add(s => {
@@ -366,6 +368,7 @@ export function NCPlayer(
       enabled={customSubtitleDisplay}
       settings={subSettings}
       globalEvents={globalEvents}
+      defaults={defaultSubSettings}
     />,
     <FullscreenButton
       isFullscreen={isFullscreen}

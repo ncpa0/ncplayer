@@ -1,15 +1,21 @@
 import { ReadonlySignal, sig, Signal } from "@ncpa0cpl/vanilla-jsx/signals";
 import SubSettingsIcon from "../assets/cog.svg";
 import { GlobalEventController } from "../hooks/global-events-controller";
+import { isInside } from "../utilities/is-inside";
 import { SubtitleSettings } from "./subtitle-select";
 
-const DEFAULTS = {
+export const SUB_DEFAULTS = {
   fontSize: 3,
   outlineSize: 0.04,
+  padding: 1,
+  fontFamily: "Verdana",
+  textColor: "#000000",
+  outlineColor: "#ffffff",
 };
 
 export function getInitSubSettings(
   persistent: ReadonlySignal<boolean | undefined>,
+  definedDefs?: Partial<typeof SUB_DEFAULTS>,
 ): SubtitleSettings {
   if (persistent.get()) {
     const stored = localStorage.getItem("ncplayer-sub-settings");
@@ -19,7 +25,7 @@ export function getInitSubSettings(
       } catch {}
     }
   }
-  return {};
+  return definedDefs ?? {};
 }
 
 export function SubtitleSettingsBtn(
@@ -27,32 +33,50 @@ export function SubtitleSettingsBtn(
     enabled: ReadonlySignal<boolean | undefined>;
     settings: Signal<SubtitleSettings>;
     globalEvents: GlobalEventController;
+    defaults?: Partial<typeof SUB_DEFAULTS>;
   },
 ) {
+  const defaults = props.defaults
+    ? {
+      ...SUB_DEFAULTS,
+      ...props.defaults,
+    }
+    : SUB_DEFAULTS;
+
   const popoverVisible = sig(false);
 
   const handlePress = () => {
-    popoverVisible.dispatch(v => !v);
+    popoverVisible.dispatch(true);
   };
 
   const handleFontSizeIncrement = () => {
-    const fs = props.settings.get().fontSize ?? DEFAULTS.fontSize;
+    const fs = props.settings.get().fontSize ?? defaults.fontSize;
     props.settings.dispatch(v => ({ ...v, fontSize: fs + 0.1 }));
   };
 
   const handleFontSizeDecrement = () => {
-    const fs = props.settings.get().fontSize ?? DEFAULTS.fontSize;
+    const fs = props.settings.get().fontSize ?? defaults.fontSize;
     props.settings.dispatch(v => ({ ...v, fontSize: fs - 0.1 }));
   };
 
   const handleOutlineSizeIncrement = () => {
-    const fs = props.settings.get().outlineSize ?? DEFAULTS.outlineSize;
+    const fs = props.settings.get().outlineSize ?? defaults.outlineSize;
     props.settings.dispatch(v => ({ ...v, outlineSize: fs + 0.01 }));
   };
 
   const handleOutlineSizeDecrement = () => {
-    const fs = props.settings.get().outlineSize ?? DEFAULTS.outlineSize;
+    const fs = props.settings.get().outlineSize ?? defaults.outlineSize;
     props.settings.dispatch(v => ({ ...v, outlineSize: fs - 0.01 }));
+  };
+
+  const handlePaddingSizeIncrement = () => {
+    const fs = props.settings.get().padding ?? defaults.padding;
+    props.settings.dispatch(v => ({ ...v, padding: fs + 0.1 }));
+  };
+
+  const handlePaddingSizeDecrement = () => {
+    const fs = props.settings.get().padding ?? defaults.padding;
+    props.settings.dispatch(v => ({ ...v, padding: fs - 0.1 }));
   };
 
   const handleFontColorChange = (
@@ -69,28 +93,33 @@ export function SubtitleSettingsBtn(
     props.settings.dispatch(v => ({ ...v, outlineColor: newColor }));
   };
 
-  const handleReset = () => {
-    props.settings.dispatch({});
+  const handleFontChange = (ev: Event & { target: HTMLInputElement }) => {
+    const newFont = ev.target.value;
+    props.settings.dispatch(v => ({ ...v, fontFamily: newFont }));
   };
 
-  props.globalEvents.on("click", (e) => {
-    if (!popoverVisible.get()) {
-      return;
-    }
+  const handleReset = () => {
+    props.settings.dispatch(props.defaults ?? {});
+  };
 
-    // check if the click was outside the popover
-    if (
-      e.target instanceof HTMLElement
-      && !e.target.closest(".subtitle-settings-modal")
-    ) {
-      popoverVisible.dispatch(false);
-      e.stopPropagation();
-      e.preventDefault();
-    }
-  });
+  props.globalEvents.on(
+    "click",
+    (e) => {
+      if (!popoverVisible.get()) {
+        return;
+      }
+
+      if (!isInside(e.target, ".subtitle-settings-popover")) {
+        popoverVisible.dispatch(false);
+        e.stopPropagation();
+      }
+    },
+    "document",
+    { capture: true },
+  );
 
   return (
-    <div class={{ "subtitle-settings-modal": true, "visible": props.enabled }}>
+    <div class={{ "subtitle-settings": true, "visible": props.enabled }}>
       {sig.and(
         props,
         <button
@@ -128,7 +157,7 @@ export function SubtitleSettingsBtn(
             </button>
             <span class="fontsize-preview">
               x{props.settings.derive(v =>
-                (v.fontSize ?? DEFAULTS.fontSize).toFixed(2)
+                (v.fontSize ?? defaults.fontSize).toFixed(2)
               )}
             </span>
             <button
@@ -153,7 +182,7 @@ export function SubtitleSettingsBtn(
             </button>
             <span class="fontsize-preview">
               x{props.settings.derive(v =>
-                (v.outlineSize ?? DEFAULTS.outlineSize).toFixed(2)
+                (v.outlineSize ?? defaults.outlineSize).toFixed(2)
               )}
             </span>
             <button
@@ -167,12 +196,54 @@ export function SubtitleSettingsBtn(
 
         <div class={"settings-entry"}>
           <span>
+            Padding:
+          </span>
+          <div>
+            <button
+              class="subsettbtn fontsizebtn"
+              onclick={handlePaddingSizeDecrement}
+            >
+              -
+            </button>
+            <span class="fontsize-preview">
+              {props.settings.derive(v =>
+                (v.padding ?? defaults.padding).toFixed(2)
+              )}
+            </span>
+            <button
+              class="subsettbtn fontsizebtn"
+              onclick={handlePaddingSizeIncrement}
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <div class={"settings-entry"}>
+          <span>
+            Font Family:
+          </span>
+          <div>
+            <input
+              class="subsettinput"
+              defaultValue={props.settings.derive(
+                v => v.fontFamily ?? defaults.fontFamily,
+              )}
+              onchange={handleFontChange}
+            />
+          </div>
+        </div>
+
+        <div class={"settings-entry"}>
+          <span>
             Color:
           </span>
           <div>
             <input
               class="subsettinput"
-              defaultValue="#000000"
+              defaultValue={props.settings.derive(
+                v => v.textColor ?? defaults.textColor,
+              )}
               onchange={handleFontColorChange}
             />
           </div>
@@ -185,7 +256,9 @@ export function SubtitleSettingsBtn(
           <div>
             <input
               class="subsettinput"
-              defaultValue="#ffffff"
+              defaultValue={props.settings.derive(
+                v => v.outlineColor ?? defaults.outlineColor,
+              )}
               onchange={handleOutlineColorChange}
             />
           </div>

@@ -5,6 +5,7 @@ import { useCustomSubs } from "../hooks/custom-subs";
 import { GlobalEventController } from "../hooks/global-events-controller";
 import { useSubtrackController } from "../hooks/subtrack-controller";
 import { SubtitleTrack } from "../player.component";
+import { isInside } from "../utilities/is-inside";
 
 export type SubtitleSettings = {
   fontSize?: number;
@@ -12,6 +13,7 @@ export type SubtitleSettings = {
   outlineColor?: string;
   outlineSize?: number;
   fontFamily?: string;
+  padding?: number;
 };
 
 export type SubtitleSelectProps = {
@@ -45,9 +47,7 @@ export function SubtitleSelect(
   });
 
   const handlePress = (e: MouseEvent) => {
-    popoverVisible.dispatch(v => !v);
-    e.stopPropagation();
-    e.preventDefault();
+    popoverVisible.dispatch(true);
   };
 
   const onDocumentClick = (e: MouseEvent) => {
@@ -56,17 +56,13 @@ export function SubtitleSelect(
     }
 
     // check if the click was outside the popover
-    if (
-      e.target instanceof HTMLElement
-      && !e.target.closest(".subtitle-selector-btn")
-    ) {
+    if (!isInside(e.target, ".subtitle-selector-popover")) {
       popoverVisible.dispatch(false);
       e.stopPropagation();
-      e.preventDefault();
     }
   };
 
-  globalEvents.on("click", onDocumentClick);
+  globalEvents.on("click", onDocumentClick, "document", { capture: true });
 
   const nativeSubsPopover = (
     <div class="subtitle-selector-popover">
@@ -83,8 +79,6 @@ export function SubtitleSelect(
             onclick={(ev) => {
               handleSubTrackSelect(t);
               popoverVisible.dispatch(false);
-              ev.stopPropagation();
-              ev.preventDefault();
             }}
           >
             {t.label}
@@ -119,9 +113,6 @@ export function SubtitleSelect(
             }}
             onclick={(ev) => {
               cSubs.selectSubs(t);
-              popoverVisible.dispatch(false);
-              ev.stopPropagation();
-              ev.preventDefault();
             }}
           >
             {t.label}
@@ -187,37 +178,35 @@ export function SubtitleSelect(
         (useCustom, lines, settings) => {
           if (!useCustom) return <></>;
 
+          const groupedLines = Object.groupBy(lines, (l) =>
+            l.settings.verticalPos());
+
+          const inset = settings?.padding ?? 1;
+
           return (
             <div
               class="subtitles-container"
               style={{
-                bottom: props.showControls.derive(s => s ? "4em" : "1em"),
+                top: `${inset.toFixed(2)}em`,
+                left: `${inset.toFixed(2)}em`,
+                right: `${inset.toFixed(2)}em`,
+                bottom: props.showControls.derive(s =>
+                  s ? `${(inset + 4).toFixed(2)}em` : `${inset.toFixed(2)}em`
+                ),
               }}
             >
-              {lines.map(line => {
-                const text = line.parseContent();
-                const lineStyles: JSX.VjsxStyles = {
-                  maxWidth: line.settings.getWidth(),
-                  textAlign: line.settings.alignment(),
-                };
-
-                if (line.settings.verticalPos() <= 50) {
-                  lineStyles.top = line.settings.verticalPos() + "%";
-                } else {
-                  lineStyles.bottom = (100 - line.settings.verticalPos()) + "%";
+              {Object.entries(groupedLines).map(([valignStr, lines]) => {
+                if (!lines) {
+                  return <></>;
                 }
 
-                lineStyles.left = 0;
-                lineStyles.right = 0;
-                lineStyles.width = "100%";
-                lineStyles.marginLeft = "auto";
-                lineStyles.marginRight = "auto";
-                if (line.settings.horizontalPos() < 50) {
-                  lineStyles.textAlign = "start";
-                } else if (line.settings.horizontalPos() > 50) {
-                  lineStyles.textAlign = "end";
+                const valign = Number(valignStr);
+                const lineStyles: JSX.VjsxStyles = {};
+
+                if (valign <= 50) {
+                  lineStyles.top = valign + "%";
                 } else {
-                  lineStyles.textAlign = "center";
+                  lineStyles.bottom = (100 - valign) + "%";
                 }
 
                 if (settings?.textColor) {
@@ -241,21 +230,39 @@ export function SubtitleSelect(
                     class="subtitle-line"
                     style={lineStyles}
                   >
-                    {text.map(t => {
-                      const textLines = t.text.split("\n");
+                    {lines.map((line) => {
+                      const text = line.parseContent();
+
+                      const sublineStyles: JSX.VjsxStyles = {
+                        maxWidth: line.settings.getWidth(),
+                        textAlign: line.settings.alignment(),
+                      };
+                      if (line.settings.horizontalPos() < 50) {
+                        sublineStyles.marginLeft = "unset";
+                      } else if (line.settings.horizontalPos() > 50) {
+                        sublineStyles.marginRight = "unset";
+                      }
+
                       return (
-                        <span
-                          class={{
-                            "subtitle-text-block": true,
-                            "sub-bold": t.isBold(),
-                            "sub-italic": t.isItalic(),
-                            "sub-underline": t.isUnderline(),
-                          }}
-                        >
-                          {textLines.flatMap((l, idx) => {
-                            const isLast = idx === textLines.length - 1;
-                            if (isLast) return l;
-                            return [l, <br />];
+                        <span class="subtitle-subline" style={sublineStyles}>
+                          {text.flatMap((t) => {
+                            const textLines = t.text.split("\n");
+                            return (
+                              <span
+                                class={{
+                                  "subtitle-text-block": true,
+                                  "sub-bold": t.isBold(),
+                                  "sub-italic": t.isItalic(),
+                                  "sub-underline": t.isUnderline(),
+                                }}
+                              >
+                                {textLines.flatMap((l, idx) => {
+                                  const isLast = idx === textLines.length - 1;
+                                  if (isLast) return l;
+                                  return [l, <br />];
+                                })}
+                              </span>
+                            );
                           })}
                         </span>
                       );

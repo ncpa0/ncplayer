@@ -17,6 +17,9 @@ export function useCustomSubs(props: {
     const vttIndex = selectedSubs.get();
     if (vttIndex) {
       const lines = vttIndex.find(props.videoElem.currentTime * 1000);
+      lines.sort((a, b) => {
+        return a.start.getTs() - b.start.getTs();
+      });
       visibleLines.dispatch(lines);
     }
   };
@@ -27,6 +30,7 @@ export function useCustomSubs(props: {
 
     fetch(t.src).then(resp => resp.text()).then(subs => {
       const lines = VTTParser.parse(subs);
+
       selectedSubs.dispatch(new VTTIndex(t.id, t.label, t.srclang, lines));
 
       for (const l of lines) {
