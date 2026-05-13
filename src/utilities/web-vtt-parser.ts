@@ -184,7 +184,11 @@ export class SubLine extends Struct {
           const tagName = isClosing ? raw.slice(1) : raw;
 
           // normalize (handle <br>, <br/>, <br />)
-          const normalizedTag = tagName.replace(/\/$/, "").trim();
+          const normalizedTag = tagName
+            .replace(/\s+/g, " ")
+            .replace(/\/$/, "")
+            .trim()
+            .toLowerCase();
 
           // ---- LINE BREAK ----
           if (!isClosing && normalizedTag === "br") {
@@ -195,26 +199,26 @@ export class SubLine extends Struct {
           const nextBlock = currentText.next();
 
           // ---- VOICE TAG ----
-          if (!isClosing && tagName.startsWith("v ")) {
+          if (!isClosing && normalizedTag.startsWith("v ")) {
             const speaker = tagName.slice(2).trim();
             nextBlock.setSpeaker(speaker);
-          } else if (isClosing && tagName === "v") {
+          } else if (isClosing && normalizedTag === "v") {
             [...nextBlock.tags]
               .filter(t => t.startsWith("v:"))
               .forEach(t => nextBlock.removeSpeaker());
           } // ---- BOLD ----
-          else if (tagName === "b") {
+          else if (normalizedTag === "b") {
             nextBlock.addTag(isClosing ? "b0" : "b1");
           } // ---- ITALIC ----
-          else if (tagName === "i") {
+          else if (normalizedTag === "i") {
             nextBlock.addTag(isClosing ? "i0" : "i1");
           } // ---- UNDERLINE ----
-          else if (tagName === "u") {
+          else if (normalizedTag === "u") {
             nextBlock.addTag(isClosing ? "u0" : "u1");
           } // ---- OPTIONAL: class tags <c.foo> ----
-          else if (!isClosing && tagName.startsWith("c.")) {
+          else if (!isClosing && normalizedTag.startsWith("c.")) {
             nextBlock.addTag(`c:${tagName.slice(2)}`);
-          } else if (isClosing && tagName === "c") {
+          } else if (isClosing && normalizedTag === "c") {
             [...nextBlock.tags]
               .filter(t => t.startsWith("c:"))
               .forEach(t => nextBlock.tags.delete(t));

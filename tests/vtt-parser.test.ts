@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SubLine, Timestamp, VTTParser } from "../src/utilities/web-vtt-parser";
+import { Timestamp, VTTParser } from "../src/utilities/web-vtt-parser";
 
 const SAMPLE_SIMPLE = `WEBVTT
 
@@ -48,6 +48,39 @@ At the far <b>northern edge</b> of the continent
 3
 00:01:59.900 --> 00:02:00.860 align:start
 <i>Frieren.</i>
+`;
+
+const SAMPLE_BR = `WEBVTT
+
+1
+00:00:01.000 --> 00:00:03.000
+Hello<br />world
+
+2
+00:00:03.000 --> 00:00:05.000
+Line1<br><br />Line2
+`;
+
+const SAMPLE_WEIRD_TAGS = `WEBVTT
+
+1
+00:00:01.000 --> 00:00:03.000
+Hello <B   >world</B>
+
+2
+00:00:03.000 --> 00:00:05.000
+<I   >italic <B   >bold</B   ></I   >
+
+3
+00:00:05.000 --> 00:00:07.000
+Line<br   />break
+`;
+
+const NORMALIZATION_VOICE_SAMPLE = `WEBVTT
+
+1
+00:00:01.000 --> 00:00:03.000
+<v   Alice  >Hello<BR />world</v>
 `;
 
 describe("VTTParser", () => {
@@ -270,6 +303,72 @@ describe("VTTParser", () => {
       {
         text: "Frieren.",
         tags: new Set(["i1"]),
+      },
+    ]);
+  });
+
+  it("parses <br /> as newline in parseContent", () => {
+    const subLines = VTTParser.parse(SAMPLE_BR);
+
+    expect(subLines[0].parseContent()).toEqual([
+      {
+        text: "Hello\nworld",
+        tags: new Set(),
+      },
+    ]);
+
+    expect(subLines[1].parseContent()).toEqual([
+      {
+        text: "Line1\n\nLine2",
+        tags: new Set(),
+      },
+    ]);
+  });
+
+  it("normalizes tags with uppercase and extra whitespace", () => {
+    const subLines = VTTParser.parse(SAMPLE_WEIRD_TAGS);
+
+    // <B   >
+    expect(subLines[0].parseContent()).toEqual([
+      {
+        text: "Hello ",
+        tags: new Set(),
+      },
+      {
+        text: "world",
+        tags: new Set(["b1"]),
+      },
+    ]);
+
+    // nested with messy spacing
+    expect(subLines[1].parseContent()).toEqual([
+      {
+        text: "italic ",
+        tags: new Set(["i1"]),
+      },
+      {
+        text: "bold",
+        tags: new Set(["i1", "b1"]),
+      },
+    ]);
+
+    // weird <br   />
+    expect(subLines[2].parseContent()).toEqual([
+      {
+        text: "Line\nbreak",
+        tags: new Set(),
+      },
+    ]);
+  });
+
+  it("handles mixed normalization + voice + br", () => {
+    const subLines = VTTParser.parse(NORMALIZATION_VOICE_SAMPLE);
+
+    expect(subLines[0].parseContent()).toEqual([
+      {
+        speaker: "Alice",
+        text: "Hello\nworld",
+        tags: new Set(),
       },
     ]);
   });
