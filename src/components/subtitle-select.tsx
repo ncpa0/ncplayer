@@ -46,7 +46,7 @@ export function SubtitleSelect(
     videoElem: props.videoElem,
   });
 
-  const handlePress = (e: MouseEvent) => {
+  const handlePress = () => {
     popoverVisible.dispatch(true);
   };
 
@@ -79,6 +79,7 @@ export function SubtitleSelect(
             onclick={(ev) => {
               handleSubTrackSelect(t);
               popoverVisible.dispatch(false);
+              ev.stopPropagation();
             }}
           >
             {t.label}
@@ -90,8 +91,10 @@ export function SubtitleSelect(
           "subtitle-selector-item": true,
           "active": sig.eq(activeTrack, null),
         }}
-        onclick={() => {
+        onclick={(ev) => {
           handleSubTrackDisable();
+          popoverVisible.dispatch(false);
+          ev.stopPropagation();
         }}
       >
         None
@@ -113,6 +116,8 @@ export function SubtitleSelect(
             }}
             onclick={(ev) => {
               cSubs.selectSubs(t);
+              popoverVisible.dispatch(false);
+              ev.stopPropagation();
             }}
           >
             {t.label}
@@ -124,8 +129,10 @@ export function SubtitleSelect(
           "subtitle-selector-item": true,
           "active": sig.eq(cSubs.activeTrack, null),
         }}
-        onclick={() => {
+        onclick={(ev) => {
           cSubs.unselect();
+          popoverVisible.dispatch(false);
+          ev.stopPropagation();
         }}
       >
         None

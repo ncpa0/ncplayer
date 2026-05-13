@@ -183,6 +183,15 @@ export class SubLine extends Struct {
           const isClosing = raw.startsWith("/");
           const tagName = isClosing ? raw.slice(1) : raw;
 
+          // normalize (handle <br>, <br/>, <br />)
+          const normalizedTag = tagName.replace(/\/$/, "").trim();
+
+          // ---- LINE BREAK ----
+          if (!isClosing && normalizedTag === "br") {
+            currentText.text += "\n";
+            continue;
+          }
+
           const nextBlock = currentText.next();
 
           // ---- VOICE TAG ----
