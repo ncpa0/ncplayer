@@ -88,6 +88,21 @@ export class TextBlock {
     }
   }
 
+  private cls?: string;
+  getClass() {
+    if (this.cls != null) {
+      return this.cls;
+    }
+
+    let classes: string[] = [];
+    for (const t of this.tags) {
+      if (t.startsWith("c:")) {
+        classes.push(t.substring(2));
+      }
+    }
+    return this.cls = classes.join(" ");
+  }
+
   next() {
     const n = new TextBlock(new Set(this.tags));
     n.speaker = this.speaker;
@@ -123,12 +138,14 @@ export class LineSettings extends Struct {
   position?: `${number}%`;
 
   verticalPos() {
-    if (this.line == null) return 100;
-    return Number(
-      this.line.endsWith("%")
-        ? this.line.substring(0, this.line.length - 1)
-        : this.line,
-    );
+    if (this.line == null) return "100";
+    if (this.line.endsWith("%")) {
+      return this.line.substring(0, this.line.length - 1);
+    }
+    if (this.line === "0") {
+      return "0";
+    }
+    return "100";
   }
 
   horizontalPos() {
@@ -291,8 +308,9 @@ export class VTTParser {
   private static error(msg: string): never {
     throw new Error(`VTTParser: ${msg}`);
   }
-
   static parse(s: string) {
+    // ---- NORMALIZE ----
+    s = s.replace(/^\uFEFF/, ""); // BOM
     s = s.replaceAll("\r\n", "\n");
 
     const lines: SubLine[] = [];
@@ -300,57 +318,124 @@ export class VTTParser {
 
     let i = 0;
 
-    // Skip WEBVTT header
-    if (rawLines[i]?.startsWith("WEBVTT")) {
+    const TIMESTAMP_RE =
+      /^\s*(\d{2}:)?\d{2}:\d{2}\.\d{3}\s+-->\s+(\d{2}:)?\d{2}:\d{2}\.\d{3}/;
+
+    const isTimestampLine = (line?: string) =>
+      !!line && TIMESTAMP_RE.test(line);
+
+    // ---- SKIP WEBVTT HEADER ----
+    if (rawLines[i]?.replace(/^\uFEFF/, "").startsWith("WEBVTT")) {
       i++;
-      while (rawLines[i]?.trim() !== "") i++;
-      i++;
+
+      // skip header metadata
+      while (
+        i < rawLines.length
+        && rawLines[i]!.trim() !== ""
+      ) {
+        i++;
+      }
+
+      while (
+        i < rawLines.length
+        && rawLines[i]!.trim() === ""
+      ) {
+        i++;
+      }
     }
 
     while (i < rawLines.length) {
       let line = rawLines[i]?.trim();
 
+      // ---- SKIP EMPTY ----
       if (!line) {
         i++;
         continue;
       }
 
+      // ---- SKIP STYLE / NOTE / REGION BLOCKS ----
+      if (
+        line === "STYLE"
+        || line === "REGION"
+        || line.startsWith("NOTE")
+      ) {
+        i++;
+
+        while (i < rawLines.length) {
+          const next = rawLines[i]!;
+
+          // stop if next cue begins
+          if (isTimestampLine(next)) {
+            break;
+          }
+
+          // stop if cue-id followed by timestamp
+          if (
+            next.trim() !== ""
+            && isTimestampLine(rawLines[i + 1])
+          ) {
+            break;
+          }
+
+          i++;
+        }
+
+        continue;
+      }
+
       const sub = SubLine.new();
 
-      // Detect cue identifier (optional)
-      if (!line.includes("-->")) {
+      // ---- OPTIONAL CUE IDENTIFIER ----
+      if (!isTimestampLine(line)) {
         sub.lineNumber = line;
         i++;
         line = rawLines[i]?.trim();
       }
 
-      if (!line) {
+      if (!line || !isTimestampLine(line)) {
         this.error(`Invalid VTT cue (line ${i})`);
       }
 
-      if (!line.includes("-->")) {
-        const prevLine = lines.at(-1);
-        if (prevLine) {
-          prevLine.content += "\n" + line;
-          continue;
-        }
-        this.error(`Invalid VTT cue (line ${i})`);
-      }
-
-      // Parse timing + settings
+      // ---- PARSE TIMINGS ----
       const [startPart, rest] = line.split("-->");
-      const [endPart, ...settingsParts] = rest!.trim().split(/\s+/);
+
+      if (!rest) {
+        this.error(`Invalid VTT timing separator (line ${i})`);
+      }
+
+      const timingParts = rest.trim().split(/\s+/);
+
+      const endPart = timingParts.shift();
+
+      if (!endPart) {
+        this.error(`Invalid VTT end timestamp (line ${i})`);
+      }
 
       parseTimestamp(startPart!.trim(), sub.start);
-      parseTimestamp(endPart!.trim(), sub.end);
+      parseTimestamp(endPart.trim(), sub.end);
 
-      // Parse settings
-      for (const setting of settingsParts) {
-        const [key, value] = setting.split(":");
+      // ---- PARSE SETTINGS ----
+      for (const setting of timingParts) {
+        const colonIdx = setting.indexOf(":");
+
+        // malformed setting
+        if (colonIdx <= 0) {
+          continue;
+        }
+
+        const key = setting.slice(0, colonIdx);
+        const value = setting.slice(colonIdx + 1);
+
+        // missing value
+        if (!value) {
+          continue;
+        }
+
         if (
-          key && value
-          && (key === "line" || key === "align" || key === "position"
-            || key === "size")
+          key === "line"
+          || key === "align"
+          || key === "position"
+          || key === "size"
         ) {
           sub.settings[key] = value as any;
         }
@@ -358,16 +443,35 @@ export class VTTParser {
 
       i++;
 
-      // Parse content
-      while (i < rawLines.length && rawLines[i]!.trim() !== "") {
-        sub.content += rawLines[i]! + "\n";
+      // ---- PARSE CONTENT ----
+      while (i < rawLines.length) {
+        const contentLine = rawLines[i]!;
+
+        // explicit cue separator
+        if (contentLine.trim() === "") {
+          i++;
+          break;
+        }
+
+        // implicit cue separator (missing blank line)
+        if (isTimestampLine(contentLine)) {
+          break;
+        }
+
+        // cue-id followed by timestamp
+        if (
+          contentLine.trim() !== ""
+          && isTimestampLine(rawLines[i + 1])
+        ) {
+          break;
+        }
+
+        sub.content += contentLine + "\n";
         i++;
       }
 
-      sub.content = sub.content.trim();
+      sub.content = sub.content.trimEnd();
       lines.push(sub);
-
-      i++;
     }
 
     return lines;

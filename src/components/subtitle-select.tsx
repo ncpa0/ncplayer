@@ -254,14 +254,18 @@ export function SubtitleSelect(
                         <span class="subtitle-subline" style={sublineStyles}>
                           {text.flatMap((t) => {
                             const textLines = t.text.split("\n");
+                            const tclasses: Record<string, string | boolean> = {
+                              "subtitle-text-block": true,
+                              "sub-bold": t.isBold(),
+                              "sub-italic": t.isItalic(),
+                              "sub-underline": t.isUnderline(),
+                            };
+                            if (t.getClass() != "") {
+                              tclasses[t.getClass()] = true;
+                            }
                             return (
                               <span
-                                class={{
-                                  "subtitle-text-block": true,
-                                  "sub-bold": t.isBold(),
-                                  "sub-italic": t.isItalic(),
-                                  "sub-underline": t.isUnderline(),
-                                }}
+                                class={tclasses}
                               >
                                 {textLines.flatMap((l, idx) => {
                                   const isLast = idx === textLines.length - 1;

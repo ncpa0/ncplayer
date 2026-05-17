@@ -83,6 +83,105 @@ const NORMALIZATION_VOICE_SAMPLE = `WEBVTT
 <v   Alice  >Hello<BR />world</v>
 `;
 
+const STYLED_SAMPLE = `WEBVTT
+
+STYLE
+::cue {
+  background-image: linear-gradient(to bottom, dimgray, lightgray);
+  color: papayawhip;
+}
+
+NOTE comment blocks can be used between style blocks.
+
+STYLE
+::cue(b) {
+  color: peachpuff;
+}
+
+1
+00:00:01.000 --> 00:00:03.000
+<v   Alice  >Hello<BR />world</v>
+`;
+
+const BOM_SAMPLE = `\uFEFFWEBVTT
+
+1
+00:00:01.000 --> 00:00:02.000
+Hello
+`;
+
+const STYLE_WITH_EMPTY_LINES_SAMPLE = `WEBVTT
+
+STYLE
+
+::cue {
+  color: lime;
+
+  font-family: Arial;
+
+}
+
+::cue(.important) {
+  font-weight: bold;
+}
+
+1
+00:00:01.000 --> 00:00:02.000
+Hello
+`;
+
+const REGION_SAMPLE = `WEBVTT
+
+REGION
+id:fred
+width:40%
+lines:3
+regionanchor:0%,100%
+viewportanchor:10%,90%
+
+1
+00:00:01.000 --> 00:00:02.000
+Hello
+`;
+
+const NOTE_WITH_BLANK_LINES_SAMPLE = `WEBVTT
+
+NOTE
+this is a note
+
+with blank lines
+
+and more text
+
+1
+00:00:01.000 --> 00:00:02.000
+Hello
+`;
+
+const BLANK_LINES_ON_CUES_SAMPLE = `WEBVTT
+
+1
+00:00:01.000 --> 00:00:02.000
+Hello
+2
+00:00:03.000 --> 00:00:04.000
+World
+`;
+
+const MALFORMED_CUE_SAMPLE = `WEBVTT
+
+1
+00:00:01.000 --> 00:00:02.000 line: align position:50% size:
+Hello
+`;
+
+const TS_WITHOUT_HOUR_SAMPLE = `WEBVTT
+
+1
+00:01.500 --> 00:05.000
+Hello
+`;
+
 describe("VTTParser", () => {
   it("parses simple vtt subtitles", () => {
     const subLines = VTTParser.parse(SAMPLE_SIMPLE);
@@ -371,5 +470,168 @@ describe("VTTParser", () => {
         tags: new Set(),
       },
     ]);
+  });
+
+  it("still works when vtt file contains styles and notes", () => {
+    const subLines = VTTParser.parse(STYLED_SAMPLE);
+
+    expect(subLines[0].parseContent()).toEqual([
+      {
+        speaker: "Alice",
+        text: "Hello\nworld",
+        tags: new Set(),
+      },
+    ]);
+  });
+
+  it("handles BOM before WEBVTT", () => {
+    const input = BOM_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(1);
+
+    expect(subLines[0]).toEqual({
+      lineNumber: "1",
+      settings: {},
+      content: "Hello",
+      start: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "01",
+        millisecond: "000",
+      }),
+      end: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "02",
+        millisecond: "000",
+      }),
+    });
+  });
+
+  it("ignores STYLE blocks with internal blank lines", () => {
+    const input = STYLE_WITH_EMPTY_LINES_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(1);
+    expect(subLines[0]!.content).toBe("Hello");
+  });
+
+  it("ignores REGION blocks", () => {
+    const input = REGION_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(1);
+    expect(subLines[0]!.content).toBe("Hello");
+  });
+
+  it("ignores NOTE blocks with blank lines", () => {
+    const input = NOTE_WITH_BLANK_LINES_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(1);
+    expect(subLines[0]!.content).toBe("Hello");
+  });
+
+  it("handles missing blank lines between cues", () => {
+    const input = BLANK_LINES_ON_CUES_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(2);
+
+    expect(subLines[0]).toEqual({
+      lineNumber: "1",
+      settings: {},
+      content: "Hello",
+      start: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "01",
+        millisecond: "000",
+      }),
+      end: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "02",
+        millisecond: "000",
+      }),
+    });
+
+    expect(subLines[1]).toEqual({
+      lineNumber: "2",
+      settings: {},
+      content: "World",
+      start: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "03",
+        millisecond: "000",
+      }),
+      end: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "04",
+        millisecond: "000",
+      }),
+    });
+  });
+
+  it("ignores malformed cue settings without values", () => {
+    const input = MALFORMED_CUE_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(1);
+
+    expect(subLines[0]).toEqual({
+      lineNumber: "1",
+      settings: {
+        position: "50%",
+      },
+      content: "Hello",
+      start: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "01",
+        millisecond: "000",
+      }),
+      end: Timestamp.new({
+        hour: "00",
+        minute: "00",
+        second: "02",
+        millisecond: "000",
+      }),
+    });
+  });
+
+  it("supports timestamps without hours", () => {
+    const input = TS_WITHOUT_HOUR_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(1);
+
+    expect(subLines[0]).toEqual({
+      lineNumber: "1",
+      settings: {},
+      content: "Hello",
+      start: Timestamp.new({
+        hour: "0",
+        minute: "00",
+        second: "01",
+        millisecond: "500",
+      }),
+      end: Timestamp.new({
+        hour: "0",
+        minute: "00",
+        second: "05",
+        millisecond: "000",
+      }),
+    });
   });
 });
