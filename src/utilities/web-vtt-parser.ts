@@ -276,16 +276,21 @@ export class SubLine extends Struct {
             continue;
           }
           break;
-
-        case "&":
-          currentText.text += "&amp;";
-          continue;
       }
 
       currentText.text += char;
     }
 
     const result = textBlocks.filter(t => t.text.length > 0);
+    result.forEach(t => {
+      t.text = t.text
+        .replaceAll("&amp;", "&")
+        .replaceAll("&lt;", "<")
+        .replaceAll("&gt;", ">")
+        .replaceAll("&nbsp;", " ")
+        .replaceAll("&lrm;", "")
+        .replaceAll("&rlm;", "");
+    });
     this.parsedMemo = result;
     return result;
   }

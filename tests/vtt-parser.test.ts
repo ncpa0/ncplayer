@@ -182,6 +182,13 @@ const TS_WITHOUT_HOUR_SAMPLE = `WEBVTT
 Hello
 `;
 
+const ESCAPE_SEQ_SAMPLE = `WEBVTT
+
+1
+00:01.500 --> 00:05.000
+&lt;b&gt;Hello &amp; goodbye&lt;/b&gt;
+`;
+
 describe("VTTParser", () => {
   it("parses simple vtt subtitles", () => {
     const subLines = VTTParser.parse(SAMPLE_SIMPLE);
@@ -633,5 +640,35 @@ describe("VTTParser", () => {
         millisecond: "000",
       }),
     });
+  });
+
+  it("handles escape sequences", () => {
+    const input = ESCAPE_SEQ_SAMPLE;
+
+    const subLines = VTTParser.parse(input);
+
+    expect(subLines).toHaveLength(1);
+
+    expect(subLines[0]).toEqual({
+      lineNumber: "1",
+      settings: {},
+      content: "&lt;b&gt;Hello &amp; goodbye&lt;/b&gt;",
+      start: Timestamp.new({
+        hour: "0",
+        minute: "00",
+        second: "01",
+        millisecond: "500",
+      }),
+      end: Timestamp.new({
+        hour: "0",
+        minute: "00",
+        second: "05",
+        millisecond: "000",
+      }),
+    });
+
+    expect(subLines[0].parseContent()).toEqual([
+      expect.objectContaining({ text: "<b>Hello & goodbye</b>" }),
+    ]);
   });
 });
