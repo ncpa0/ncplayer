@@ -12,6 +12,11 @@
     max-width: 100%;
     max-height: 100%;
 
+    &,
+    & * {
+        user-select: none;
+    }
+
     & .main-player {
         max-width: 100%;
         max-height: 100%;
@@ -331,7 +336,7 @@
             --fsize: 3cqw;
             --txtclr: white;
             --outlineclr: #000;
-            --outlinesize: 0.04;
+            --outlinesize: 0.06;
             --font: Verdana;
             font-size: var(--fsize);
             position: absolute;
@@ -403,7 +408,7 @@
             display: grid;
         }
 
-        grid-template-columns: auto 1fr;
+        grid-template-columns: auto 12em;
         row-gap: .6em;
         column-gap: .4em;
         position: absolute;
@@ -422,6 +427,11 @@
             min-width: 4em;
             text-align: center;
             line-height: 2em;
+        }
+
+        & .subsettcheckbox {
+            height: 1em;
+            width: 1em;
         }
 
         & .subsettbtn {
@@ -453,6 +463,10 @@
         & .settings-entry {
             padding: .4em;
             display: contents;
+
+            &.setting-hidden {
+                display: none;
+            }
         }
     }
 }

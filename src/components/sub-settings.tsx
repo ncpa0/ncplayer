@@ -6,7 +6,7 @@ import { SubtitleSettings } from "./subtitle-select";
 
 export const SUB_DEFAULTS = {
   fontSize: 3,
-  outlineSize: 0.04,
+  outlineSize: 0.06,
   padding: 1,
   fontFamily: "Verdana",
   textColor: "#000000",
@@ -30,7 +30,7 @@ export function getInitSubSettings(
 
 export function SubtitleSettingsBtn(
   props: {
-    enabled: ReadonlySignal<boolean | undefined>;
+    visible: ReadonlySignal<boolean | undefined>;
     settings: Signal<SubtitleSettings>;
     globalEvents: GlobalEventController;
     defaults?: Partial<typeof SUB_DEFAULTS>;
@@ -47,6 +47,14 @@ export function SubtitleSettingsBtn(
 
   const handlePress = () => {
     popoverVisible.dispatch(true);
+  };
+
+  const handleForceNativeChange = (
+    ev: Event & {
+      target: HTMLInputElement;
+    },
+  ) => {
+    props.settings.dispatch(v => ({ ...v, forceNative: ev.target.checked }));
   };
 
   const handleFontSizeIncrement = () => {
@@ -118,8 +126,12 @@ export function SubtitleSettingsBtn(
     { capture: true },
   );
 
+  const forcedNativeSubs = props.settings.derive(v =>
+    v.forceNative === true ? true : false
+  );
+
   return (
-    <div class={{ "subtitle-settings": true, "visible": props.enabled }}>
+    <div class={{ "subtitle-settings": true, "visible": props.visible }}>
       {sig.and(
         props,
         <button
@@ -144,7 +156,10 @@ export function SubtitleSettingsBtn(
         <div class={"settings-entry"}>
           <h2 class="sub-settings-header">Subtitles Settings</h2>
         </div>
-        <div class={"settings-entry"}>
+
+        <div
+          class={{ "settings-entry": true, "setting-hidden": forcedNativeSubs }}
+        >
           <span>
             Font size:
           </span>
@@ -169,7 +184,9 @@ export function SubtitleSettingsBtn(
           </div>
         </div>
 
-        <div class={"settings-entry"}>
+        <div
+          class={{ "settings-entry": true, "setting-hidden": forcedNativeSubs }}
+        >
           <span>
             Outline size:
           </span>
@@ -194,7 +211,9 @@ export function SubtitleSettingsBtn(
           </div>
         </div>
 
-        <div class={"settings-entry"}>
+        <div
+          class={{ "settings-entry": true, "setting-hidden": forcedNativeSubs }}
+        >
           <span>
             Padding:
           </span>
@@ -219,7 +238,9 @@ export function SubtitleSettingsBtn(
           </div>
         </div>
 
-        <div class={"settings-entry"}>
+        <div
+          class={{ "settings-entry": true, "setting-hidden": forcedNativeSubs }}
+        >
           <span>
             Font Family:
           </span>
@@ -234,7 +255,9 @@ export function SubtitleSettingsBtn(
           </div>
         </div>
 
-        <div class={"settings-entry"}>
+        <div
+          class={{ "settings-entry": true, "setting-hidden": forcedNativeSubs }}
+        >
           <span>
             Color:
           </span>
@@ -249,7 +272,9 @@ export function SubtitleSettingsBtn(
           </div>
         </div>
 
-        <div class={"settings-entry"}>
+        <div
+          class={{ "settings-entry": true, "setting-hidden": forcedNativeSubs }}
+        >
           <span>
             Outline Color:
           </span>
@@ -262,6 +287,16 @@ export function SubtitleSettingsBtn(
               onchange={handleOutlineColorChange}
             />
           </div>
+        </div>
+
+        <div class={"settings-entry"}>
+          <span>Force native:</span>
+          <input
+            type="checkbox"
+            class="subsettcheckbox"
+            checked={forcedNativeSubs}
+            onchange={handleForceNativeChange}
+          />
         </div>
 
         <div class={"settings-entry"}>

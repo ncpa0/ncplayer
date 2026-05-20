@@ -14,6 +14,7 @@ export type SubtitleSettings = {
   outlineSize?: number;
   fontFamily?: string;
   padding?: number;
+  forceNative?: boolean;
 };
 
 export type SubtitleSelectProps = {
@@ -24,20 +25,20 @@ export type SubtitleSelectProps = {
   addCleanup: (fn: Function) => void;
   customSubtitleDisplay: ReadonlySignal<boolean | undefined>;
   subSettings: ReadonlySignal<SubtitleSettings | undefined>;
+  onChange?: (event: { selectedTrack: null | SubtitleTrack }) => void;
 };
 
 export function SubtitleSelect(
   props: SubtitleSelectProps,
 ) {
-  const { globalEvents, customSubtitleDisplay } = props;
+  const { globalEvents, onChange, customSubtitleDisplay } = props;
   const popoverVisible = sig(false);
 
-  const { activeTrack, handleSubTrackSelect, handleSubTrackDisable } =
-    useSubtrackController(
-      props.videoElem,
-      props.showControls,
-      props.addCleanup,
-    );
+  const nativeSubs = useSubtrackController(
+    props.videoElem,
+    props.showControls,
+    props.addCleanup,
+  );
 
   const cSubs = useCustomSubs({
     addCleanup: props.addCleanup,
@@ -45,6 +46,25 @@ export function SubtitleSelect(
     subtitles: props.subtitles,
     videoElem: props.videoElem,
   });
+
+  const o = customSubtitleDisplay.observe(customSubsEnabled => {
+    if (customSubsEnabled) {
+      const activeTrack = nativeSubs.activeTrack.get();
+      if (activeTrack) {
+        nativeSubs.handleSubTrackDisable();
+        cSubs.selectSubs(activeTrack);
+      }
+    } else {
+      const activeTrack = cSubs.activeTrack.get()?.track;
+      if (activeTrack) {
+        cSubs.unselect();
+        setTimeout(() => {
+          nativeSubs.handleSubTrackSelect(activeTrack);
+        }, 100);
+      }
+    }
+  });
+  props.addCleanup(() => o.detach());
 
   const handlePress = () => {
     popoverVisible.dispatch(true);
@@ -74,12 +94,13 @@ export function SubtitleSelect(
           <button
             class={{
               "subtitle-selector-item": true,
-              "active": sig.eq(activeTrack, t.id),
+              "active": sig.eq(nativeSubs.activeTrackID, t.id),
             }}
             onclick={(ev) => {
-              handleSubTrackSelect(t);
+              nativeSubs.handleSubTrackSelect(t);
               popoverVisible.dispatch(false);
               ev.stopPropagation();
+              onChange?.({ selectedTrack: t });
             }}
           >
             {t.label}
@@ -89,12 +110,13 @@ export function SubtitleSelect(
       <button
         class={{
           "subtitle-selector-item": true,
-          "active": sig.eq(activeTrack, null),
+          "active": sig.eq(nativeSubs.activeTrackID, null),
         }}
         onclick={(ev) => {
-          handleSubTrackDisable();
+          nativeSubs.handleSubTrackDisable();
           popoverVisible.dispatch(false);
           ev.stopPropagation();
+          onChange?.({ selectedTrack: null });
         }}
       >
         None
@@ -112,12 +134,13 @@ export function SubtitleSelect(
           <button
             class={{
               "subtitle-selector-item": true,
-              "active": sig.eq(cSubs.activeTrack, t.id),
+              "active": sig.eq(cSubs.activeTrackID, t.id),
             }}
             onclick={(ev) => {
               cSubs.selectSubs(t);
               popoverVisible.dispatch(false);
               ev.stopPropagation();
+              onChange?.({ selectedTrack: t });
             }}
           >
             {t.label}
@@ -127,12 +150,13 @@ export function SubtitleSelect(
       <button
         class={{
           "subtitle-selector-item": true,
-          "active": sig.eq(cSubs.activeTrack, null),
+          "active": sig.eq(cSubs.activeTrackID, null),
         }}
         onclick={(ev) => {
           cSubs.unselect();
           popoverVisible.dispatch(false);
           ev.stopPropagation();
+          onChange?.({ selectedTrack: null });
         }}
       >
         None
@@ -288,5 +312,28 @@ export function SubtitleSelect(
     </div>
   );
 
-  return { controlElement, subsOut };
+  return {
+    controlElement,
+    subsOut,
+    controls: {
+      selectSubtitleTrack(trackID: string | undefined) {
+        if (trackID == null) {
+          if (customSubtitleDisplay.get()) {
+            cSubs.unselect();
+          } else {
+            nativeSubs.handleSubTrackDisable();
+          }
+        }
+
+        const track = props.subtitles.get()?.find(s => s.id === trackID);
+        if (track) {
+          if (customSubtitleDisplay.get()) {
+            cSubs.selectSubs(track);
+          } else {
+            nativeSubs.handleSubTrackSelect(track);
+          }
+        }
+      },
+    },
+  };
 }

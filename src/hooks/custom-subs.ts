@@ -25,13 +25,17 @@ export function useCustomSubs(props: {
   };
 
   const selectSubs = (t: SubtitleTrack) => {
+    if (t === selectedSubs.get()?.track) {
+      return;
+    }
+
     selectedSubs.dispatch(undefined);
     visibleLines.dispatch([]);
 
     fetch(t.src).then(resp => resp.text()).then(subs => {
       const lines = VTTParser.parse(subs);
 
-      selectedSubs.dispatch(new VTTIndex(t.id, t.label, t.srclang, lines));
+      selectedSubs.dispatch(new VTTIndex(t, lines));
 
       for (const l of lines) {
         l.parseContent();
@@ -60,7 +64,8 @@ export function useCustomSubs(props: {
     visibleLines,
     selectSubs,
     unselect,
-    activeTrack: selectedSubs.derive(i => i?.id),
+    activeTrack: selectedSubs,
+    activeTrackID: selectedSubs.derive(i => i?.track.id),
   };
 }
 
@@ -80,9 +85,7 @@ export class VTTIndex {
   private lines: SubLine[];
 
   constructor(
-    public readonly id: string,
-    public readonly label: string,
-    public readonly lang: string,
+    public readonly track: SubtitleTrack,
     lines: SubLine[],
   ) {
     this.lines = lines;

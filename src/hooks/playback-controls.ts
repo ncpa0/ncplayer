@@ -473,6 +473,6 @@ export function usePlaybackControls(params: {
         return () =>
           elem.removeEventListener(ev as string, listener as EventListener);
       },
-    } satisfies PlayerController,
+    } satisfies Partial<PlayerController>,
   };
 }

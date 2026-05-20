@@ -30,6 +30,7 @@ export interface PlayerController {
   reset(): void;
   video(): HTMLVideoElement;
   isReady(): boolean;
+  selectSubtitleTrack(trackID: string | undefined): void;
   on<E extends keyof PlayerEvents>(
     event: E,
     listener: PlayerEvents[E],
@@ -70,6 +71,7 @@ export type PlayerEvents = {
   enterpictureinpicture: (event: VideoEvent<PictureInPictureEvent>) => void;
   leavepictureinpicture: (event: VideoEvent<PictureInPictureEvent>) => void;
   resize: (event: VideoEvent) => void;
+  subtitleSelect: (event: { selectedTrack: null | SubtitleTrack }) => void;
 };
 
 export type ControllerRef = { current: PlayerController } | {
@@ -230,7 +232,11 @@ export type PlayerProps = {
 };
 
 export function NCPlayer(
-  { on: listeners, defaultSubSettings, ...rawProps }: PlayerProps,
+  {
+    on: { subtitleSelect, ...listeners } = {},
+    defaultSubSettings,
+    ...rawProps
+  }: PlayerProps,
 ) {
   const cleanups: Array<Function> = [];
   const props = signalize(rawProps);
@@ -262,6 +268,15 @@ export function NCPlayer(
       localStorage.setItem("ncplayer-sub-settings", JSON.stringify(s));
     }
   });
+
+  const effectiveCustomSubsEnabled = sig.derive(
+    subSettings,
+    props.customSubtitleDisplay,
+    (settings, defaultEnabled) => {
+      if (settings?.forceNative) return false;
+      return defaultEnabled;
+    },
+  );
 
   const {
     isFullscreen,
@@ -317,7 +332,10 @@ export function NCPlayer(
       })}
     >
       {VideoSources({ sources })}
-      {sig.and(sig.not(customSubtitleDisplay), VideoSubTracks({ subtitles }))}
+      {sig.and(
+        sig.not(effectiveCustomSubsEnabled),
+        VideoSubTracks({ subtitles }),
+      )}
     </video>
   ) as HTMLVideoElement;
 
@@ -327,8 +345,9 @@ export function NCPlayer(
     videoElem: videoElem,
     globalEvents: globalEvents,
     addCleanup: c => cleanups.push(c),
-    customSubtitleDisplay: customSubtitleDisplay,
+    customSubtitleDisplay: effectiveCustomSubsEnabled,
     subSettings,
+    onChange: subtitleSelect,
   });
 
   const controlsElems = [
@@ -365,7 +384,7 @@ export function NCPlayer(
     />,
     subs.controlElement,
     <SubtitleSettingsBtn
-      enabled={customSubtitleDisplay}
+      visible={customSubtitleDisplay}
       settings={subSettings}
       globalEvents={globalEvents}
       defaults={defaultSubSettings}
@@ -463,7 +482,10 @@ export function NCPlayer(
   });
 
   Object.defineProperty(ncplayerElem, "controller", {
-    value: publicController,
+    value: {
+      ...publicController,
+      ...subs.controls,
+    },
   });
 
   return ncplayerElem as HTMLDivElement & {

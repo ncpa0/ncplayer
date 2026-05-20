@@ -27,13 +27,24 @@ export function useSubtrackController(
   showControls: ReadonlySignal<boolean>,
   addCleanup: (fn: Function) => void,
 ) {
-  const activeTrack = sig<null | string>(null);
+  const activeTrack = sig<null | SubtitleTrack>(null);
+  const activeTrackID = activeTrack.derive(t => t?.id);
 
+  let activeTrackElem: TextTrack | undefined;
   const handleSubTrackSelect = (track: SubtitleTrack) => {
+    if (track === activeTrack.get()) {
+      return;
+    }
+
     for (const trackElem of videoElem.textTracks) {
       if (trackElem.id === track.id) {
+        if (activeTrackElem) {
+          activeTrackElem.mode = "disabled";
+        }
+        // console.log("enabling sub track:", trackElem);
         trackElem.mode = "showing";
-        activeTrack.dispatch(track.id);
+        activeTrackElem = trackElem;
+        activeTrack.dispatch(track);
 
         // cue line changes are iffy, won't take effect if set before displaying
         // so we need to wait a bit
@@ -44,20 +55,16 @@ export function useSubtrackController(
           }
         }, 25);
       } else {
-        trackElem.mode = "hidden";
+        trackElem.mode = "disabled";
       }
-      trackElem.cues;
     }
   };
 
   const handleSubTrackDisable = () => {
-    for (const trackElem of videoElem.textTracks) {
-      if (trackElem.mode === "showing") {
-        trackElem.mode = "hidden";
-        resetCues(trackElem.cues);
-        activeTrack.dispatch(null);
-      }
+    if (activeTrackElem) {
+      activeTrackElem.mode = "disabled";
     }
+    activeTrack.dispatch(null);
   };
 
   let cleanup = () => {};
@@ -97,6 +104,7 @@ export function useSubtrackController(
 
   return {
     activeTrack,
+    activeTrackID,
     handleSubTrackSelect,
     handleSubTrackDisable,
   };
