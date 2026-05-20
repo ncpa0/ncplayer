@@ -458,6 +458,7 @@
             outline: none;
             border-radius: 3px;
             font-family: monospace;
+            max-width: 95%;
         }
 
         & .settings-entry {
