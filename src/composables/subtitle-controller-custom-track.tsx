@@ -1,0 +1,291 @@
+import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
+import { NCPlayerContext } from "../player";
+import { SubtitleTrack } from "../player.component";
+import { SubLine, VTTParser } from "../utilities/web-vtt-parser";
+import { TrackController } from "./subtitle-controller";
+
+export class CustomSubTrackController implements TrackController {
+  private selectedSubs = sig<VTTIndex>();
+  private visibleLines = sig<SubLine[]>([], {
+    compare: arraysEq,
+  });
+  private fetchAbort?: AbortController;
+  private settingsObserver;
+
+  constructor(protected context: NCPlayerContext) {
+    const progressCb = () => this.onProgress();
+    this.settingsObserver = context.subSettings.enabled.add((isEnabled) => {
+      if (isEnabled) {
+        context.video.addEventListener(
+          "timeupdate",
+          progressCb,
+        );
+      } else {
+        context.video.removeEventListener(
+          "timeupdate",
+          progressCb,
+        );
+      }
+    });
+  }
+
+  private _activeTrack = this.selectedSubs.derive(s => s?.track);
+  activeTrack(): ReadonlySignal<SubtitleTrack | undefined> {
+    return this._activeTrack;
+  }
+
+  private _activeTrackID = this._activeTrack.derive(t => t?.id);
+  activeTrackID(): ReadonlySignal<string | undefined> {
+    return this._activeTrackID;
+  }
+
+  private onProgress() {
+    const vttIndex = this.selectedSubs.get();
+    if (vttIndex) {
+      const lines = vttIndex.find(this.context.video.currentTime * 1000);
+      lines.sort((a, b) => {
+        return a.start.getTs() - b.start.getTs();
+      });
+      this.visibleLines.dispatch(lines);
+    }
+  }
+
+  select(t: SubtitleTrack) {
+    if (t === this.selectedSubs.get()?.track) {
+      return;
+    }
+
+    if (this.fetchAbort != null) {
+      this.fetchAbort.abort(new Error("another track was selected"));
+      this.fetchAbort = undefined;
+    }
+
+    this.selectedSubs.dispatch(undefined);
+    this.visibleLines.dispatch([]);
+
+    this.fetchAbort = new AbortController();
+    const s = this.fetchAbort.signal;
+
+    fetch(t.src, { signal: s }).then(resp => resp.text())
+      .then(subs => {
+        if (s.aborted) return;
+
+        const lines = VTTParser.parse(subs);
+
+        this.selectedSubs.dispatch(new VTTIndex(t, lines));
+
+        for (const l of lines) {
+          l.parseContent();
+        }
+
+        this.onProgress();
+      });
+  }
+
+  unselect() {
+    this.selectedSubs.dispatch(undefined);
+    this.visibleLines.dispatch([]);
+    this.fetchAbort?.abort();
+    this.fetchAbort = undefined;
+  }
+
+  transfer(c: TrackController): void {
+    const at = this.selectedSubs.get()?.track;
+    this.unselect();
+    if (at) {
+      setTimeout(() => {
+        c.select(at);
+      }, 100);
+    }
+  }
+
+  dispose() {
+    this.settingsObserver.detach();
+    this.fetchAbort?.abort();
+  }
+
+  renderSubtitles() {
+    return (
+      <div>
+        {sig.derive(
+          this.visibleLines,
+          this.context.subSettings.values,
+          (lines, settings) => {
+            const groupedLines = Object.groupBy(
+              lines,
+              (l) => l.settings.verticalPos(),
+            );
+
+            const inset = settings?.padding ?? 1;
+
+            return (
+              <div
+                class="subtitles-container"
+                style={{
+                  top: `${inset.toFixed(2)}em`,
+                  left: `${inset.toFixed(2)}em`,
+                  right: `${inset.toFixed(2)}em`,
+                  bottom: this.context.controls.showControls.derive(s =>
+                    s ? `${(inset + 4).toFixed(2)}em` : `${inset.toFixed(2)}em`
+                  ),
+                }}
+              >
+                {Object.entries(groupedLines).map(([valignStr, lines]) => {
+                  if (!lines) {
+                    return <></>;
+                  }
+
+                  const valign = Number(valignStr);
+                  const lineStyles: JSX.VjsxStyles = {};
+
+                  if (valign <= 50) {
+                    lineStyles.top = valign + "%";
+                  } else {
+                    lineStyles.bottom = (100 - valign) + "%";
+                  }
+
+                  if (settings?.textColor) {
+                    lineStyles["--txtclr"] = settings.textColor;
+                  }
+                  if (settings?.fontSize) {
+                    lineStyles["--fsize"] = settings.fontSize + "cqw";
+                  }
+                  if (settings?.outlineSize) {
+                    lineStyles["--outlinesize"] = settings.outlineSize.toFixed(
+                      3,
+                    );
+                  }
+                  if (settings?.outlineColor) {
+                    lineStyles["--outlineclr"] = settings.outlineColor;
+                  }
+                  if (settings?.fontFamily) {
+                    lineStyles["--font"] = settings.fontFamily;
+                  }
+
+                  return (
+                    <span
+                      class="subtitle-line"
+                      style={lineStyles}
+                    >
+                      {lines.map((line) => {
+                        const text = line.parseContent();
+
+                        const sublineStyles: JSX.VjsxStyles = {
+                          maxWidth: line.settings.getWidth(),
+                          textAlign: line.settings.alignment(),
+                        };
+                        if (line.settings.horizontalPos() < 50) {
+                          sublineStyles.marginLeft = "unset";
+                        } else if (line.settings.horizontalPos() > 50) {
+                          sublineStyles.marginRight = "unset";
+                        }
+
+                        return (
+                          <span class="subtitle-subline" style={sublineStyles}>
+                            {text.flatMap((t) => {
+                              const textLines = t.text.split("\n");
+                              const tclasses: Record<string, string | boolean> =
+                                {
+                                  "subtitle-text-block": true,
+                                  "sub-bold": t.isBold(),
+                                  "sub-italic": t.isItalic(),
+                                  "sub-underline": t.isUnderline(),
+                                };
+                              if (t.getClass() != "") {
+                                tclasses[t.getClass()] = true;
+                              }
+                              return (
+                                <span
+                                  class={tclasses}
+                                >
+                                  {textLines.flatMap((l, idx) => {
+                                    const isLast = idx === textLines.length - 1;
+                                    if (isLast) return l;
+                                    return [l, <br />];
+                                  })}
+                                </span>
+                              );
+                            })}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          },
+        )}
+      </div>
+    ) as HTMLDivElement;
+  }
+}
+
+function arraysEq<T>(a: T[], b: T[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]! !== b[i]!) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export class VTTIndex {
+  private starts: number[];
+  private lines: SubLine[];
+
+  constructor(
+    public readonly track: SubtitleTrack,
+    lines: SubLine[],
+  ) {
+    this.lines = lines;
+    this.starts = lines.map(l => l.start.getTs());
+  }
+
+  find(time: number): SubLine[] {
+    const result: SubLine[] = [];
+
+    // Binary search for closest start <= time
+    let left = 0;
+    let right = this.starts.length - 1;
+    let idx = -1;
+
+    while (left <= right) {
+      const mid = (left + right) >> 1;
+
+      if (this.starts[mid]! <= time) {
+        idx = mid;
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+
+    if (idx === -1) return result;
+
+    // Walk backwards (handle overlaps)
+    for (let i = idx; i >= 0; i--) {
+      const line = this.lines[i]!;
+      if (line.end.getTs() < time) break;
+      if (line.start.getTs() <= time) {
+        result.push(line);
+      }
+    }
+
+    // Walk forward (rare overlaps)
+    for (let i = idx + 1; i < this.lines.length; i++) {
+      const line = this.lines[i]!;
+      if (line.start.getTs() > time) break;
+      if (line.end.getTs() >= time) {
+        result.push(line);
+      }
+    }
+
+    return result;
+  }
+
+  dispose() {
+  }
+}

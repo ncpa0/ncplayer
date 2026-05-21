@@ -2,7 +2,7 @@ import { If } from "@ncpa0cpl/vanilla-jsx";
 import { ReadonlySignal } from "@ncpa0cpl/vanilla-jsx/signals";
 import VolumeMutedIcon from "../assets/volume-muted.svg";
 import VolumeIcon from "../assets/volume.svg";
-import { GlobalEventController } from "../hooks/global-events-controller";
+import { EventController } from "../composables/event-controller";
 import { changeWithStep, clamp, toPrecision } from "../utilities/math";
 import { stopEvent } from "../utilities/stop-event";
 
@@ -10,7 +10,7 @@ export type VolumeControlProps = {
   volume: ReadonlySignal<number>;
   onVolumeChange: (newVolume: number) => void;
   onVolumeToggle: () => void;
-  globalEvents: GlobalEventController;
+  globalEvents: EventController;
 };
 
 export function VolumeControl(props: VolumeControlProps) {
