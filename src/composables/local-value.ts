@@ -43,6 +43,9 @@ export class LocalSignal<T> extends LocalValue<T> {
     },
   ) {
     super(k, initV);
+    if (opts.enabled === false) {
+      this.value = initV;
+    }
     this._signal = sig<T>(this.get());
     this.signal = this._signal.readonly();
   }
