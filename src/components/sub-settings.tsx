@@ -1,38 +1,17 @@
-import { ReadonlySignal, sig, Signal } from "@ncpa0cpl/vanilla-jsx/signals";
+import { ReadonlySignal, sig } from "@ncpa0cpl/vanilla-jsx/signals";
 import SubSettingsIcon from "../assets/cog.svg";
-import { GlobalEventController } from "../hooks/global-events-controller";
+import { EventController } from "../composables/event-controller";
+import {
+  SUB_DEFAULTS,
+  SubtitleSettingsController,
+} from "../composables/subtitle-settings";
 import { isInside } from "../utilities/is-inside";
-import { SubtitleSettings } from "./subtitle-select";
-
-export const SUB_DEFAULTS = {
-  fontSize: 3,
-  outlineSize: 0.06,
-  padding: 1,
-  fontFamily: "Verdana",
-  textColor: "#000000",
-  outlineColor: "#ffffff",
-};
-
-export function getInitSubSettings(
-  persistent: ReadonlySignal<boolean | undefined>,
-  definedDefs?: Partial<typeof SUB_DEFAULTS>,
-): SubtitleSettings {
-  if (persistent.get()) {
-    const stored = localStorage.getItem("ncplayer-sub-settings");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {}
-    }
-  }
-  return definedDefs ?? {};
-}
 
 export function SubtitleSettingsBtn(
   props: {
     visible: ReadonlySignal<boolean | undefined>;
-    settings: Signal<SubtitleSettings>;
-    globalEvents: GlobalEventController;
+    settings: SubtitleSettingsController;
+    globalEvents: EventController;
     defaults?: Partial<typeof SUB_DEFAULTS>;
   },
 ) {
@@ -54,60 +33,60 @@ export function SubtitleSettingsBtn(
       target: HTMLInputElement;
     },
   ) => {
-    props.settings.dispatch(v => ({ ...v, forceNative: ev.target.checked }));
+    props.settings.set({ forceNative: ev.target.checked });
   };
 
   const handleFontSizeIncrement = () => {
-    const fs = props.settings.get().fontSize ?? defaults.fontSize;
-    props.settings.dispatch(v => ({ ...v, fontSize: fs + 0.1 }));
+    const fs = props.settings.values.get().fontSize ?? defaults.fontSize;
+    props.settings.set({ fontSize: fs + 0.1 });
   };
 
   const handleFontSizeDecrement = () => {
-    const fs = props.settings.get().fontSize ?? defaults.fontSize;
-    props.settings.dispatch(v => ({ ...v, fontSize: fs - 0.1 }));
+    const fs = props.settings.values.get().fontSize ?? defaults.fontSize;
+    props.settings.set({ fontSize: fs - 0.1 });
   };
 
   const handleOutlineSizeIncrement = () => {
-    const fs = props.settings.get().outlineSize ?? defaults.outlineSize;
-    props.settings.dispatch(v => ({ ...v, outlineSize: fs + 0.01 }));
+    const fs = props.settings.values.get().outlineSize ?? defaults.outlineSize;
+    props.settings.set({ outlineSize: fs + 0.01 });
   };
 
   const handleOutlineSizeDecrement = () => {
-    const fs = props.settings.get().outlineSize ?? defaults.outlineSize;
-    props.settings.dispatch(v => ({ ...v, outlineSize: fs - 0.01 }));
+    const fs = props.settings.values.get().outlineSize ?? defaults.outlineSize;
+    props.settings.set({ outlineSize: fs - 0.01 });
   };
 
   const handlePaddingSizeIncrement = () => {
-    const fs = props.settings.get().padding ?? defaults.padding;
-    props.settings.dispatch(v => ({ ...v, padding: fs + 0.1 }));
+    const fs = props.settings.values.get().padding ?? defaults.padding;
+    props.settings.set({ padding: fs + 0.1 });
   };
 
   const handlePaddingSizeDecrement = () => {
-    const fs = props.settings.get().padding ?? defaults.padding;
-    props.settings.dispatch(v => ({ ...v, padding: fs - 0.1 }));
+    const fs = props.settings.values.get().padding ?? defaults.padding;
+    props.settings.set({ padding: fs - 0.1 });
   };
 
   const handleFontColorChange = (
     ev: Event & { target: HTMLInputElement },
   ) => {
     const newColor = ev.target.value;
-    props.settings.dispatch(v => ({ ...v, textColor: newColor }));
+    props.settings.set({ textColor: newColor });
   };
 
   const handleOutlineColorChange = (
     ev: Event & { target: HTMLInputElement },
   ) => {
     const newColor = ev.target.value;
-    props.settings.dispatch(v => ({ ...v, outlineColor: newColor }));
+    props.settings.set({ outlineColor: newColor });
   };
 
   const handleFontChange = (ev: Event & { target: HTMLInputElement }) => {
     const newFont = ev.target.value;
-    props.settings.dispatch(v => ({ ...v, fontFamily: newFont }));
+    props.settings.set({ fontFamily: newFont });
   };
 
   const handleReset = () => {
-    props.settings.dispatch(props.defaults ?? {});
+    props.settings.reset();
   };
 
   props.globalEvents.on(
@@ -126,7 +105,7 @@ export function SubtitleSettingsBtn(
     { capture: true },
   );
 
-  const forcedNativeSubs = props.settings.derive(v =>
+  const forcedNativeSubs = props.settings.values.derive(v =>
     v.forceNative === true ? true : false
   );
 
@@ -171,7 +150,7 @@ export function SubtitleSettingsBtn(
               -
             </button>
             <span class="fontsize-preview">
-              x{props.settings.derive(v =>
+              x{props.settings.values.derive(v =>
                 (v.fontSize ?? defaults.fontSize).toFixed(2)
               )}
             </span>
@@ -198,7 +177,7 @@ export function SubtitleSettingsBtn(
               -
             </button>
             <span class="fontsize-preview">
-              x{props.settings.derive(v =>
+              x{props.settings.values.derive(v =>
                 (v.outlineSize ?? defaults.outlineSize).toFixed(2)
               )}
             </span>
@@ -225,7 +204,7 @@ export function SubtitleSettingsBtn(
               -
             </button>
             <span class="fontsize-preview">
-              {props.settings.derive(v =>
+              {props.settings.values.derive(v =>
                 (v.padding ?? defaults.padding).toFixed(2)
               )}
             </span>
@@ -247,7 +226,7 @@ export function SubtitleSettingsBtn(
           <div>
             <input
               class="subsettinput"
-              defaultValue={props.settings.derive(
+              defaultValue={props.settings.values.derive(
                 v => v.fontFamily ?? defaults.fontFamily,
               )}
               onchange={handleFontChange}
@@ -264,7 +243,7 @@ export function SubtitleSettingsBtn(
           <div>
             <input
               class="subsettinput"
-              defaultValue={props.settings.derive(
+              defaultValue={props.settings.values.derive(
                 v => v.textColor ?? defaults.textColor,
               )}
               onchange={handleFontColorChange}
@@ -281,7 +260,7 @@ export function SubtitleSettingsBtn(
           <div>
             <input
               class="subsettinput"
-              defaultValue={props.settings.derive(
+              defaultValue={props.settings.values.derive(
                 v => v.outlineColor ?? defaults.outlineColor,
               )}
               onchange={handleOutlineColorChange}

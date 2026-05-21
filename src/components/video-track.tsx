@@ -1,6 +1,6 @@
 import { ReadonlySignal, sig, Signal } from "@ncpa0cpl/vanilla-jsx/signals";
 import throttle from "lodash.throttle";
-import { GlobalEventController } from "../hooks/global-events-controller";
+import { EventController } from "../composables/event-controller";
 import { detectMobile } from "../utilities/detect-mobile";
 import { formatTime } from "../utilities/format-time";
 import { changeWithStep, clamp, toPrecision } from "../utilities/math";
@@ -18,7 +18,7 @@ export type VideoTrackProps = {
   onWheel: (e: WheelEvent) => void;
   onMouseEnter: (e: MouseEvent) => void;
   onMouseLeave: (e: MouseEvent) => void;
-  globalEvents: GlobalEventController;
+  globalEvents: EventController;
 };
 
 export function VideoTrack(props: VideoTrackProps) {
