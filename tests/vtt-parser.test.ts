@@ -189,9 +189,64 @@ const ESCAPE_SEQ_SAMPLE = `WEBVTT
 &lt;b&gt;Hello &amp; goodbye&lt;/b&gt;
 `;
 
+const TAGS_WITH_CLASSES_SAMPLE = `WEBVTT
+
+1
+00:01.500 --> 00:05.000
+<b.foo><u.bar.baz>Hello<b/></u>
+`;
+
+const VALUE_TAGS_WITH_CLASSES_SAMPLE = `WEBVTT
+
+1
+00:01.500 --> 00:05.000
+<v.cl1.cl2 Tom>Howdy</v>
+<lang.langline pl-PL>Co tam robisz?</lang>
+`;
+
+const NESTES_CLASSES_SAMPLE = `WEBVTT
+
+1
+00:01.500 --> 00:05.000
+<v.cl1 Tom>Normal, <b.bldcls>bold</b> <c.foobar><i.italic><lang.lnpl pl-PL>italic polish</lang></i> no italic,</c> back to normal</v>
+`;
+
+const STYLE_WITH_NOTES_IN_BETWEEN_SAMPLE = `WEBVTT
+
+NOTE lorem ipsum
+dolor sit amet
+STYLE
+::cue {
+  color: lime;
+}
+
+NOTE this
+is a
+multiline note
+
+STYLE
+::cue(.important) {
+  font-weight: bold;
+}
+
+REGION
+width: 50%
+
+STYLE
+::cue(b) {
+  font-weight: 900;
+}
+
+NOTE lorem ipsum
+dolor sit amet
+1
+00:00:01.000 --> 00:00:02.000
+Hello
+`;
+
 describe("VTTParser", () => {
   it("parses simple vtt subtitles", () => {
-    const subLines = VTTParser.parse(SAMPLE_SIMPLE);
+    const { lines: subLines } = VTTParser.parse(SAMPLE_SIMPLE);
 
     expect(subLines).toEqual([
       {
@@ -251,7 +306,7 @@ describe("VTTParser", () => {
   });
 
   it("parses vtt with cue settings", () => {
-    const subLines = VTTParser.parse(SAMPLE_CUE_SETTINGS);
+    const { lines: subLines } = VTTParser.parse(SAMPLE_CUE_SETTINGS);
 
     expect(subLines).toEqual([
       {
@@ -314,7 +369,7 @@ describe("VTTParser", () => {
   });
 
   it("parses vtt with tags", () => {
-    const subLines = VTTParser.parse(SAMPLE_TAGS);
+    const { lines: subLines } = VTTParser.parse(SAMPLE_TAGS);
 
     expect(subLines).toEqual([
       {
@@ -414,7 +469,7 @@ describe("VTTParser", () => {
   });
 
   it("parses <br /> as newline in parseContent", () => {
-    const subLines = VTTParser.parse(SAMPLE_BR);
+    const { lines: subLines } = VTTParser.parse(SAMPLE_BR);
 
     expect(subLines[0].parseContent()).toEqual([
       {
@@ -432,7 +487,7 @@ describe("VTTParser", () => {
   });
 
   it("normalizes tags with uppercase and extra whitespace", () => {
-    const subLines = VTTParser.parse(SAMPLE_WEIRD_TAGS);
+    const { lines: subLines } = VTTParser.parse(SAMPLE_WEIRD_TAGS);
 
     // <B   >
     expect(subLines[0].parseContent()).toEqual([
@@ -468,7 +523,7 @@ describe("VTTParser", () => {
   });
 
   it("handles mixed normalization + voice + br", () => {
-    const subLines = VTTParser.parse(NORMALIZATION_VOICE_SAMPLE);
+    const { lines: subLines } = VTTParser.parse(NORMALIZATION_VOICE_SAMPLE);
 
     expect(subLines[0].parseContent()).toEqual([
       {
@@ -480,7 +535,7 @@ describe("VTTParser", () => {
   });
 
   it("still works when vtt file contains styles and notes", () => {
-    const subLines = VTTParser.parse(STYLED_SAMPLE);
+    const { lines: subLines, styles } = VTTParser.parse(STYLED_SAMPLE);
 
     expect(subLines[0].parseContent()).toEqual([
       {
@@ -489,12 +544,30 @@ describe("VTTParser", () => {
         tags: new Set(),
       },
     ]);
+
+    expect(styles).toEqual([
+      expect.objectContaining({
+        content: [
+          "::cue {",
+          "  background-image: linear-gradient(to bottom, dimgray, lightgray);",
+          "  color: papayawhip;",
+          "}",
+        ],
+      }),
+      expect.objectContaining({
+        content: [
+          "::cue(b) {",
+          "  color: peachpuff;",
+          "}",
+        ],
+      }),
+    ]);
   });
 
   it("handles BOM before WEBVTT", () => {
     const input = BOM_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(1);
 
@@ -520,16 +593,34 @@ describe("VTTParser", () => {
   it("ignores STYLE blocks with internal blank lines", () => {
     const input = STYLE_WITH_EMPTY_LINES_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines, styles } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(1);
     expect(subLines[0]!.content).toBe("Hello");
+
+    expect(styles).toEqual([
+      expect.objectContaining({
+        content: [
+          "::cue {",
+          "  color: lime;",
+          "  font-family: Arial;",
+          "}",
+        ],
+      }),
+      expect.objectContaining({
+        content: [
+          "::cue(.important) {",
+          "  font-weight: bold;",
+          "}",
+        ],
+      }),
+    ]);
   });
 
   it("ignores REGION blocks", () => {
     const input = REGION_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(1);
     expect(subLines[0]!.content).toBe("Hello");
@@ -538,7 +629,7 @@ describe("VTTParser", () => {
   it("ignores NOTE blocks with blank lines", () => {
     const input = NOTE_WITH_BLANK_LINES_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(1);
     expect(subLines[0]!.content).toBe("Hello");
@@ -547,7 +638,7 @@ describe("VTTParser", () => {
   it("handles missing blank lines between cues", () => {
     const input = BLANK_LINES_ON_CUES_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(2);
 
@@ -591,7 +682,7 @@ describe("VTTParser", () => {
   it("ignores malformed cue settings without values", () => {
     const input = MALFORMED_CUE_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(1);
 
@@ -619,7 +710,7 @@ describe("VTTParser", () => {
   it("supports timestamps without hours", () => {
     const input = TS_WITHOUT_HOUR_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(1);
 
@@ -645,7 +736,7 @@ describe("VTTParser", () => {
   it("handles escape sequences", () => {
     const input = ESCAPE_SEQ_SAMPLE;
 
-    const subLines = VTTParser.parse(input);
+    const { lines: subLines } = VTTParser.parse(input);
 
     expect(subLines).toHaveLength(1);
 
@@ -669,6 +760,160 @@ describe("VTTParser", () => {
 
     expect(subLines[0].parseContent()).toEqual([
       expect.objectContaining({ text: "<b>Hello & goodbye</b>" }),
+    ]);
+  });
+
+  it("tags with classes", () => {
+    const { lines } = VTTParser.parse(TAGS_WITH_CLASSES_SAMPLE);
+
+    expect(lines).toHaveLength(1);
+
+    expect(lines[0].parseContent()).toEqual([
+      expect.objectContaining({
+        text: "Hello",
+        tags: new Set([
+          "u1",
+          "b1",
+          "c:foo",
+          "c:bar",
+          "c:baz",
+        ]),
+      }),
+    ]);
+  });
+
+  it("tags with values and classes", () => {
+    const { lines } = VTTParser.parse(VALUE_TAGS_WITH_CLASSES_SAMPLE);
+
+    expect(lines).toHaveLength(1);
+
+    expect(lines[0].parseContent()).toEqual([
+      expect.objectContaining({
+        text: "Howdy",
+        speaker: "Tom",
+        language: undefined,
+        tags: new Set([
+          "c:cl1",
+          "c:cl2",
+        ]),
+      }),
+      expect.objectContaining({
+        text: "\n",
+        speaker: undefined,
+        language: undefined,
+        tags: new Set(),
+      }),
+      expect.objectContaining({
+        text: "Co tam robisz?",
+        speaker: undefined,
+        language: "pl-PL",
+        tags: new Set([
+          "c:langline",
+        ]),
+      }),
+    ]);
+  });
+
+  it("tags with nested classes", () => {
+    const { lines } = VTTParser.parse(NESTES_CLASSES_SAMPLE);
+
+    expect(lines).toHaveLength(1);
+
+    console.log(lines[0].parseContent());
+    expect(lines[0].parseContent()).toEqual([
+      expect.objectContaining({
+        speaker: "Tom",
+        text: "Normal, ",
+        language: undefined,
+        tags: new Set([
+          "c:cl1",
+        ]),
+      }),
+      expect.objectContaining({
+        text: "bold",
+        speaker: "Tom",
+        language: undefined,
+        tags: new Set([
+          "c:cl1",
+          "c:bldcls",
+          "b1",
+        ]),
+      }),
+      expect.objectContaining({
+        text: " ",
+        speaker: "Tom",
+        language: undefined,
+        tags: new Set([
+          "c:cl1",
+        ]),
+      }),
+      expect.objectContaining({
+        text: "italic polish",
+        speaker: "Tom",
+        language: "pl-PL",
+        tags: new Set([
+          "c:cl1",
+          "c:foobar",
+          "c:italic",
+          "c:lnpl",
+          "i1",
+        ]),
+      }),
+      expect.objectContaining({
+        text: " no italic,",
+        speaker: "Tom",
+        language: undefined,
+        tags: new Set([
+          "c:cl1",
+          "c:foobar",
+        ]),
+      }),
+      expect.objectContaining({
+        text: " back to normal",
+        speaker: "Tom",
+        language: undefined,
+        tags: new Set([
+          "c:cl1",
+        ]),
+      }),
+    ]);
+  });
+
+  it("styles with notes and regions in-between", () => {
+    const { lines, styles } = VTTParser.parse(
+      STYLE_WITH_NOTES_IN_BETWEEN_SAMPLE,
+    );
+
+    expect(styles.length).toBe(3);
+    expect(styles).toEqual([
+      expect.objectContaining({
+        content: [
+          "::cue {",
+          "  color: lime;",
+          "}",
+        ],
+      }),
+      expect.objectContaining({
+        content: [
+          "::cue(.important) {",
+          "  font-weight: bold;",
+          "}",
+        ],
+      }),
+      expect.objectContaining({
+        content: [
+          "::cue(b) {",
+          "  font-weight: 900;",
+          "}",
+        ],
+      }),
+    ]);
+
+    expect(lines.length).toBe(1);
+    expect(lines[0].parseContent()).toEqual([
+      expect.objectContaining({
+        text: "Hello",
+      }),
     ]);
   });
 });

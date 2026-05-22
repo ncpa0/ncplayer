@@ -16,6 +16,7 @@ export abstract class Struct {
 export class TextBlock {
   text = "";
   speaker?: string;
+  language?: string;
 
   constructor(public tags: Set<string> = new Set()) {}
 
@@ -25,6 +26,14 @@ export class TextBlock {
 
   removeSpeaker() {
     this.speaker = undefined;
+  }
+
+  setLanguage(lang: string) {
+    this.language = lang;
+  }
+
+  removeLanguage() {
+    this.language = undefined;
   }
 
   isBold() {
@@ -39,7 +48,31 @@ export class TextBlock {
     return this.tags.has("u1");
   }
 
-  addTag(tag: string) {
+  addClasses(cls: string[]) {
+    for (let i = 0; i < cls.length; i++) {
+      this.tags.add(`c:${cls[i]}`);
+    }
+  }
+
+  removeClasses(cls: string[]) {
+    for (let i = 0; i < cls.length; i++) {
+      this.tags.delete(`c:${cls[i]}`);
+    }
+  }
+
+  addTag(
+    tag:
+      | "b1"
+      | "b0"
+      | "i1"
+      | "i0"
+      | "u1"
+      | "u0"
+      | "rt1"
+      | "rt0"
+      | "ruby1"
+      | "ruby0",
+  ) {
     switch (tag) {
       case "b1":
         this.tags.delete("b0");
@@ -61,26 +94,6 @@ export class TextBlock {
         break;
       case "u0":
         this.tags.delete("u1");
-        break;
-      case "an1":
-      case "an2":
-      case "an3":
-      case "an4":
-      case "an5":
-      case "an6":
-      case "an7":
-      case "an8":
-      case "an9":
-        this.tags.delete("an1");
-        this.tags.delete("an2");
-        this.tags.delete("an3");
-        this.tags.delete("an4");
-        this.tags.delete("an5");
-        this.tags.delete("an6");
-        this.tags.delete("an7");
-        this.tags.delete("an8");
-        this.tags.delete("an9");
-        this.tags.add(tag);
         break;
       default:
         this.tags.add(tag);
@@ -106,6 +119,7 @@ export class TextBlock {
   next() {
     const n = new TextBlock(new Set(this.tags));
     n.speaker = this.speaker;
+    n.language = this.language;
     return n;
   }
 }
@@ -175,6 +189,74 @@ export class SubLine extends Struct {
 
   private parsedMemo?: TextBlock[];
 
+  private isTag(
+    tagType: "b" | "u" | "i" | "v" | "c" | "rt" | "ruby" | "lang",
+    value: string,
+  ): boolean {
+    switch (tagType) {
+      case "b":
+        return value === "b" || value.startsWith("b.");
+      case "u":
+        return value === "u" || value.startsWith("u.");
+      case "i":
+        return value === "i" || value.startsWith("i.");
+      case "v":
+        return value === "v" || value.startsWith("v.")
+          || value.startsWith("v ");
+      case "c":
+        return value === "c" || value.startsWith("c.");
+      case "ruby":
+        return value === "ruby" || value.startsWith("ruby.");
+      case "rt":
+        return value === "rt" || value.startsWith("rt.");
+      case "lang":
+        return value === "lang" || value.startsWith("lang.")
+          || value.startsWith("lang ");
+    }
+    return false;
+  }
+
+  private parseTagClasses(tag: string): string[] {
+    const classes: string[] = [];
+
+    let char: string;
+    for (let i = 0; i < tag.length; i++) {
+      char = tag[i]!;
+
+      if (char === ".") {
+        classes.push("");
+      } else if (char === " " && classes.length > 0) {
+        return classes;
+      } else if (classes.length > 0) {
+        classes[classes.length - 1] += char;
+      }
+    }
+
+    return classes;
+  }
+
+  private parseTagValue(tag: string): string {
+    let tagName = "";
+    let tagNameComplete = false;
+
+    let char: string;
+    for (let i = 0; i < tag.length; i++) {
+      char = tag[i]!;
+
+      if (!tagNameComplete) {
+        if (char === " " && tagName.length > 0) {
+          tagNameComplete = true;
+          continue;
+        }
+        tagName += char;
+      } else {
+        return tag.slice(i).trim();
+      }
+    }
+
+    return "";
+  }
+
   parseContent() {
     if (this.parsedMemo != null) {
       return this.parsedMemo;
@@ -185,6 +267,16 @@ export class SubLine extends Struct {
 
     let isInTag = false;
     let tagBuffer = "";
+    const classStack = {
+      b: [] as Array<string[]>,
+      u: [] as Array<string[]>,
+      i: [] as Array<string[]>,
+      v: [] as Array<string[]>,
+      c: [] as Array<string[]>,
+      rt: [] as Array<string[]>,
+      ruby: [] as Array<string[]>,
+      lang: [] as Array<string[]>,
+    };
 
     for (let i = 0; i < this.content.length; i++) {
       const char = this.content[i];
@@ -215,30 +307,94 @@ export class SubLine extends Struct {
 
           const nextBlock = currentText.next();
 
-          // ---- VOICE TAG ----
-          if (!isClosing && normalizedTag.startsWith("v ")) {
-            const speaker = tagName.slice(2).trim();
-            nextBlock.setSpeaker(speaker);
-          } else if (isClosing && normalizedTag === "v") {
-            [...nextBlock.tags]
-              .filter(t => t.startsWith("v:"))
-              .forEach(t => nextBlock.removeSpeaker());
-          } // ---- BOLD ----
-          else if (normalizedTag === "b") {
-            nextBlock.addTag(isClosing ? "b0" : "b1");
+          // ---- BOLD ----
+          if (this.isTag("b", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.addTag("b0");
+              nextBlock.removeClasses(classStack.b.pop() ?? []);
+            } else {
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.addClasses(cls);
+              nextBlock.addTag("b1");
+              classStack.b.push(cls);
+            }
           } // ---- ITALIC ----
-          else if (normalizedTag === "i") {
-            nextBlock.addTag(isClosing ? "i0" : "i1");
+          else if (this.isTag("i", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.addTag("i0");
+              nextBlock.removeClasses(classStack.i.pop() ?? []);
+            } else {
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.addClasses(cls);
+              nextBlock.addTag("i1");
+              classStack.i.push(cls);
+            }
           } // ---- UNDERLINE ----
-          else if (normalizedTag === "u") {
-            nextBlock.addTag(isClosing ? "u0" : "u1");
-          } // ---- OPTIONAL: class tags <c.foo> ----
-          else if (!isClosing && normalizedTag.startsWith("c.")) {
-            nextBlock.addTag(`c:${tagName.slice(2)}`);
-          } else if (isClosing && normalizedTag === "c") {
-            [...nextBlock.tags]
-              .filter(t => t.startsWith("c:"))
-              .forEach(t => nextBlock.tags.delete(t));
+          else if (this.isTag("u", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.addTag("u0");
+              nextBlock.removeClasses(classStack.u.pop() ?? []);
+            } else {
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.addClasses(cls);
+              nextBlock.addTag("u1");
+              classStack.u.push(cls);
+            }
+          } // ---- RUBY TEXT ----
+          else if (this.isTag("rt", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.addTag("rt0");
+              nextBlock.removeClasses(classStack.rt.pop() ?? []);
+            } else {
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.addClasses(cls);
+              nextBlock.addTag("rt1");
+              classStack.rt.push(cls);
+            }
+          } // ---- RUBY ----
+          else if (this.isTag("ruby", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.addTag("ruby0");
+              nextBlock.removeClasses(classStack.ruby.pop() ?? []);
+            } else {
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.addClasses(cls);
+              nextBlock.addTag("ruby1");
+              classStack.ruby.push(cls);
+            }
+          } // ---- VOICE TAG ----
+          if (this.isTag("v", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.removeSpeaker();
+              nextBlock.removeClasses(classStack.v.pop() ?? []);
+            } else {
+              const speaker = this.parseTagValue(tagName);
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.setSpeaker(speaker);
+              nextBlock.addClasses(cls);
+              classStack.v.push(cls);
+            }
+          } // ---- LANG ----
+          else if (this.isTag("lang", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.removeLanguage();
+              nextBlock.removeClasses(classStack.lang.pop() ?? []);
+            } else {
+              const language = this.parseTagValue(tagName);
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.setLanguage(language);
+              nextBlock.addClasses(cls);
+              classStack.lang.push(cls);
+            }
+          } // ---- class tags <c.foo> ----
+          else if (this.isTag("c", normalizedTag)) {
+            if (isClosing) {
+              nextBlock.removeClasses(classStack.c.pop() ?? []);
+            } else {
+              const cls = this.parseTagClasses(tagName);
+              nextBlock.addClasses(cls);
+              classStack.c.push(cls);
+            }
           }
 
           currentText = nextBlock;
@@ -257,14 +413,13 @@ export class SubLine extends Struct {
           continue;
 
         case "{":
-          // keep your existing SRT tag support
           if (this.content[i + 1] === "\\") {
             let currentTag = "";
             i += 2;
 
             while (i < this.content.length && this.content[i] !== "}") {
               if (this.content[i] === "\\") {
-                if (currentTag) currentText.addTag(currentTag);
+                if (currentTag) currentText.tags.add(currentTag);
                 currentTag = "";
               } else {
                 currentTag += this.content[i];
@@ -272,7 +427,7 @@ export class SubLine extends Struct {
               i++;
             }
 
-            if (currentTag) currentText.addTag(currentTag);
+            if (currentTag) currentText.tags.add(currentTag);
             continue;
           }
           break;
@@ -292,6 +447,68 @@ export class SubLine extends Struct {
         .replaceAll("&rlm;", "");
     });
     this.parsedMemo = result;
+    return result;
+  }
+}
+
+export type CueSelectors = {
+  cue: string;
+  bold: string;
+  italic: string;
+  underline: string;
+};
+
+export class SubStyle extends Struct {
+  content: string[] = [];
+
+  addline(l: string) {
+    if (l.trim().length !== 0) {
+      this.content.push(l);
+    }
+  }
+
+  isComplete() {
+    if (this.content.length === 0) {
+      return false;
+    }
+
+    for (let i = this.content.length - 1; i >= 0; i--) {
+      const line = this.content[i]!;
+      for (let j = line.length - 1; j >= 0; j--) {
+        const char = line[j];
+        if (char === "}") return true;
+        if (char === " ") continue;
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  private toHtmlStylesResult?: string;
+  toHtmlStyles(selectors: CueSelectors) {
+    if (this.toHtmlStylesResult != null) {
+      return this.toHtmlStylesResult;
+    }
+
+    const concated = this.content.join("\n");
+    let result: string;
+
+    if (concated.includes("::cue(")) {
+      result = concated.replaceAll(/::cue\((.+?)\)/g, (_, selector) => {
+        const transformedSelector = selector
+          .replace(/^\s*b\s*$|^\s*b(\s*\.)/, selectors.bold + "$1")
+          .replace(/^\s*i\s*$|^\s*i(\s*\.)/, selectors.italic + "$1")
+          .replace(/^\s*u\s*$|^\s*u(\s*\.)/, selectors.underline + "$1");
+        return `${selectors.cue} ${transformedSelector}`;
+      });
+    } else {
+      result = concated;
+    }
+
+    result = result.replaceAll("::cue", selectors.cue);
+
+    this.toHtmlStylesResult = result;
     return result;
   }
 }
@@ -320,6 +537,7 @@ export class VTTParser {
 
     const lines: SubLine[] = [];
     const rawLines = s.split("\n");
+    const styleLines: SubStyle[] = [];
 
     let i = 0;
 
@@ -358,16 +576,14 @@ export class VTTParser {
         continue;
       }
 
-      // ---- SKIP STYLE / NOTE / REGION BLOCKS ----
+      // ---- HANDLE STYLE / NOTE / REGION BLOCKS ----
       if (
         line === "STYLE"
-        || line === "REGION"
+        || line.startsWith("REGION")
         || line.startsWith("NOTE")
       ) {
-        i++;
-
-        while (i < rawLines.length) {
-          const next = rawLines[i]!;
+        outer: while (i < rawLines.length) {
+          let next = rawLines[i]!;
 
           // stop if next cue begins
           if (isTimestampLine(next)) {
@@ -382,8 +598,60 @@ export class VTTParser {
             break;
           }
 
+          let trimmedNext = next.trimStart();
+
+          if (
+            trimmedNext.startsWith("NOTE")
+            || trimmedNext.startsWith("REGION")
+          ) {
+            while (i < rawLines.length) {
+              next = rawLines[i]!;
+
+              if (isTimestampLine(next)) {
+                break outer;
+              }
+
+              if (
+                next.trim() !== ""
+                && isTimestampLine(rawLines[i + 1])
+              ) {
+                break outer;
+              }
+
+              if (next.startsWith("STYLE") || next.startsWith("::cue")) {
+                trimmedNext = next.trimStart();
+                break;
+              }
+
+              i++;
+            }
+          }
+
+          if (trimmedNext.startsWith("STYLE")) {
+            const lastStyle = styleLines.at(-1);
+            if (!lastStyle || lastStyle.isComplete()) {
+              styleLines.push(SubStyle.new());
+            }
+            i++;
+            continue;
+          }
+
+          if (trimmedNext.startsWith("::cue")) {
+            const lastStyle = styleLines.at(-1);
+            if (!lastStyle || lastStyle.isComplete()) {
+              styleLines.push(SubStyle.new());
+            }
+          }
+
+          if (styleLines.length === 0) {
+            styleLines.push(SubStyle.new());
+          }
+
+          styleLines.at(-1)!.addline(next);
+
           i++;
         }
+        i++;
 
         continue;
       }
@@ -479,7 +747,7 @@ export class VTTParser {
       lines.push(sub);
     }
 
-    return lines;
+    return { lines, styles: styleLines };
   }
 }
 
