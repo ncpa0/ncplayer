@@ -5,7 +5,10 @@ import { SubLine, VTTParser } from "../utilities/web-vtt-parser";
 import { TrackController } from "./subtitle-controller";
 
 export class CustomSubTrackController implements TrackController {
-  private selectedSubs = sig<VTTIndex>();
+  private selectedSubs = sig<{
+    index: VTTIndex;
+    styles?: HTMLStyleElement;
+  }>();
   private visibleLines = sig<SubLine[]>([], {
     compare: arraysEq,
   });
@@ -29,7 +32,7 @@ export class CustomSubTrackController implements TrackController {
     });
   }
 
-  private _activeTrack = this.selectedSubs.derive(s => s?.track);
+  private _activeTrack = this.selectedSubs.derive(s => s?.index.track);
   activeTrack(): ReadonlySignal<SubtitleTrack | undefined> {
     return this._activeTrack;
   }
@@ -40,7 +43,7 @@ export class CustomSubTrackController implements TrackController {
   }
 
   private onProgress() {
-    const vttIndex = this.selectedSubs.get();
+    const vttIndex = this.selectedSubs.get()?.index;
     if (vttIndex) {
       const lines = vttIndex.find(this.context.video.currentTime * 1000);
       lines.sort((a, b) => {
@@ -50,8 +53,12 @@ export class CustomSubTrackController implements TrackController {
     }
   }
 
+  getSubTrackClassName(t: SubtitleTrack) {
+    return "sub_" + t.id.replaceAll(/[^a-zA-Z0-9-_]/g, "");
+  }
+
   select(t: SubtitleTrack) {
-    if (t === this.selectedSubs.get()?.track) {
+    if (t === this.selectedSubs.get()?.index.track) {
       return;
     }
 
@@ -70,9 +77,25 @@ export class CustomSubTrackController implements TrackController {
       .then(subs => {
         if (s.aborted) return;
 
-        const lines = VTTParser.parse(subs);
+        const { lines, styles } = VTTParser.parse(subs);
 
-        this.selectedSubs.dispatch(new VTTIndex(t, lines));
+        this.selectedSubs.dispatch({
+          index: new VTTIndex(t, lines),
+          styles: styles.length > 0
+            ? ((
+              <style>
+                {styles.map(s =>
+                  s.toHtmlStyles({
+                    cue: `.${this.getSubTrackClassName(t)} .ncplayer-cue`,
+                    bold: ".sub-bold",
+                    italic: ".sub-italic",
+                    underline: ".sub-underline",
+                  })
+                )}
+              </style>
+            ) as HTMLStyleElement)
+            : undefined,
+        });
 
         for (const l of lines) {
           l.parseContent();
@@ -90,7 +113,7 @@ export class CustomSubTrackController implements TrackController {
   }
 
   transfer(c: TrackController): void {
-    const at = this.selectedSubs.get()?.track;
+    const at = this.selectedSubs.get()?.index.track;
     this.unselect();
     if (at) {
       setTimeout(() => {
@@ -106,7 +129,12 @@ export class CustomSubTrackController implements TrackController {
 
   renderSubtitles() {
     return (
-      <div>
+      <div
+        class={this.selectedSubs.derive(s =>
+          s ? this.getSubTrackClassName(s?.index.track) : ""
+        )}
+      >
+        {this.selectedSubs.derive(s => s?.styles)}
         {sig.derive(
           this.visibleLines,
           this.context.subSettings.values,
@@ -181,31 +209,40 @@ export class CustomSubTrackController implements TrackController {
                         }
 
                         return (
-                          <span class="subtitle-subline" style={sublineStyles}>
-                            {text.flatMap((t) => {
-                              const textLines = t.text.split("\n");
-                              const tclasses: Record<string, string | boolean> =
-                                {
+                          <span
+                            class="subtitle-subline"
+                            style={sublineStyles}
+                          >
+                            <span class="ncplayer-cue">
+                              {text.flatMap((t) => {
+                                const textLines = t.text.split("\n");
+                                const tclasses: Record<
+                                  string,
+                                  string | boolean
+                                > = {
                                   "subtitle-text-block": true,
                                   "sub-bold": t.isBold(),
                                   "sub-italic": t.isItalic(),
                                   "sub-underline": t.isUnderline(),
                                 };
-                              if (t.getClass() != "") {
-                                tclasses[t.getClass()] = true;
-                              }
-                              return (
-                                <span
-                                  class={tclasses}
-                                >
-                                  {textLines.flatMap((l, idx) => {
-                                    const isLast = idx === textLines.length - 1;
-                                    if (isLast) return l;
-                                    return [l, <br />];
-                                  })}
-                                </span>
-                              );
-                            })}
+                                if (t.getClass() != "") {
+                                  tclasses[t.getClass()] = true;
+                                }
+                                return (
+                                  <span
+                                    class={tclasses}
+                                    lang={t.language}
+                                  >
+                                    {textLines.flatMap((l, idx) => {
+                                      const isLast =
+                                        idx === textLines.length - 1;
+                                      if (isLast) return l;
+                                      return [l, <br />];
+                                    })}
+                                  </span>
+                                );
+                              })}
+                            </span>
                           </span>
                         );
                       })}
