@@ -14,6 +14,7 @@ export class CustomSubTrackController implements TrackController {
   });
   private fetchAbort?: AbortController;
   private settingsObserver;
+  private subsObserver;
 
   constructor(protected context: NCPlayerContext) {
     const progressCb = () => this.onProgress();
@@ -28,6 +29,17 @@ export class CustomSubTrackController implements TrackController {
           "timeupdate",
           progressCb,
         );
+      }
+    });
+    this.subsObserver = this.context.props.subtitles.add((subs = []) => {
+      const currentTrackID = this.selectedSubs.get()?.index.track.id;
+      if (currentTrackID != null && !subs.some(s => s.id === currentTrackID)) {
+        this.unselect();
+      }
+
+      const defaultSub = subs.find(s => s.default);
+      if (defaultSub) {
+        this.select(defaultSub);
       }
     });
   }
@@ -124,6 +136,7 @@ export class CustomSubTrackController implements TrackController {
 
   dispose() {
     this.settingsObserver.detach();
+    this.subsObserver.detach();
     this.fetchAbort?.abort();
   }
 
@@ -137,14 +150,14 @@ export class CustomSubTrackController implements TrackController {
         {this.selectedSubs.derive(s => s?.styles)}
         {sig.derive(
           this.visibleLines,
-          this.context.subSettings.values,
+          this.context.subSettings.values.signal,
           (lines, settings) => {
             const groupedLines = Object.groupBy(
               lines,
               (l) => l.settings.verticalPos(),
             );
 
-            const inset = settings?.padding ?? 1;
+            const inset = settings.padding ?? 1;
 
             return (
               <div
@@ -172,21 +185,21 @@ export class CustomSubTrackController implements TrackController {
                     lineStyles.bottom = (100 - valign) + "%";
                   }
 
-                  if (settings?.textColor) {
+                  if (settings.textColor) {
                     lineStyles["--txtclr"] = settings.textColor;
                   }
-                  if (settings?.fontSize) {
+                  if (settings.fontSize) {
                     lineStyles["--fsize"] = settings.fontSize + "cqw";
                   }
-                  if (settings?.outlineSize) {
+                  if (settings.outlineSize) {
                     lineStyles["--outlinesize"] = settings.outlineSize.toFixed(
                       3,
                     );
                   }
-                  if (settings?.outlineColor) {
+                  if (settings.outlineColor) {
                     lineStyles["--outlineclr"] = settings.outlineColor;
                   }
-                  if (settings?.fontFamily) {
+                  if (settings.fontFamily) {
                     lineStyles["--font"] = settings.fontFamily;
                   }
 
@@ -321,8 +334,5 @@ export class VTTIndex {
     }
 
     return result;
-  }
-
-  dispose() {
   }
 }

@@ -10,10 +10,17 @@ export class NativeSubTrackController implements TrackController {
   private activeTrackElem: TextTrack | undefined;
   private cleanupFn = () => {};
   private settingsObserver;
+  private subsObserver;
 
   constructor(protected context: NCPlayerContext) {
     this.settingsObserver = context.controls.showControls.add(show => {
       this.onControlsVisibilityChange(show);
+    });
+    this.subsObserver = this.context.props.subtitles.add((subs = []) => {
+      const currentTrackID = this._activeTrack.get()?.id;
+      if (currentTrackID != null && !subs.some(s => s.id === currentTrackID)) {
+        this.unselect();
+      }
     });
   }
 
@@ -123,6 +130,7 @@ export class NativeSubTrackController implements TrackController {
   dispose() {
     this.cleanupFn();
     this.settingsObserver.detach();
+    this.subsObserver.detach();
   }
 
   renderSubtitles() {

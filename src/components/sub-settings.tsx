@@ -105,7 +105,7 @@ export function SubtitleSettingsBtn(
     { capture: true },
   );
 
-  const forcedNativeSubs = props.settings.values.derive(v =>
+  const forcedNativeSubs = props.settings.values.signal.derive(v =>
     v.forceNative === true ? true : false
   );
 
@@ -150,7 +150,7 @@ export function SubtitleSettingsBtn(
               -
             </button>
             <span class="fontsize-preview">
-              x{props.settings.values.derive(v =>
+              x{props.settings.values.signal.derive(v =>
                 (v.fontSize ?? defaults.fontSize).toFixed(2)
               )}
             </span>
@@ -177,7 +177,7 @@ export function SubtitleSettingsBtn(
               -
             </button>
             <span class="fontsize-preview">
-              x{props.settings.values.derive(v =>
+              x{props.settings.values.signal.derive(v =>
                 (v.outlineSize ?? defaults.outlineSize).toFixed(2)
               )}
             </span>
@@ -204,7 +204,7 @@ export function SubtitleSettingsBtn(
               -
             </button>
             <span class="fontsize-preview">
-              {props.settings.values.derive(v =>
+              {props.settings.values.signal.derive(v =>
                 (v.padding ?? defaults.padding).toFixed(2)
               )}
             </span>
@@ -226,7 +226,7 @@ export function SubtitleSettingsBtn(
           <div>
             <input
               class="subsettinput"
-              defaultValue={props.settings.values.derive(
+              defaultValue={props.settings.values.signal.derive(
                 v => v.fontFamily ?? defaults.fontFamily,
               )}
               onchange={handleFontChange}
@@ -243,7 +243,7 @@ export function SubtitleSettingsBtn(
           <div>
             <input
               class="subsettinput"
-              defaultValue={props.settings.values.derive(
+              defaultValue={props.settings.values.signal.derive(
                 v => v.textColor ?? defaults.textColor,
               )}
               onchange={handleFontColorChange}
@@ -260,7 +260,7 @@ export function SubtitleSettingsBtn(
           <div>
             <input
               class="subsettinput"
-              defaultValue={props.settings.values.derive(
+              defaultValue={props.settings.values.signal.derive(
                 v => v.outlineColor ?? defaults.outlineColor,
               )}
               onchange={handleOutlineColorChange}

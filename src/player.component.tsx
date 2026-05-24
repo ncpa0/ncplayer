@@ -136,6 +136,10 @@ export type PlayerProps = {
    */
   persistentVolume?: MaybeReadonlySignal<boolean | undefined>;
   /**
+   * Whether the player subtitle settings should persist between reloads.
+   */
+  persistentSubSettings?: MaybeReadonlySignal<boolean | undefined>;
+  /**
    * When set to `false`, no styles will be added to the DOM, resulting
    * in the unstyled player. (you will need to add styles yourself)
    *
