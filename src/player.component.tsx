@@ -188,7 +188,7 @@ export type PlayerProps = {
   scrollSeeking?: MaybeReadonlySignal<"off" | "all" | "track">;
   /**
    * The duration in seconds that the player should seek when the
-   * user scrolls the mouse wheel. (Default: )
+   * user scrolls the mouse wheel. (Default: 5)
    */
   scrollSeekDuration?: MaybeReadonlySignal<number | undefined>;
   customSubtitleDisplay?: MaybeReadonlySignal<boolean | undefined>;
