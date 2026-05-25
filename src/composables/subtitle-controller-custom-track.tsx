@@ -283,18 +283,56 @@ function arraysEq<T>(a: T[], b: T[]): boolean {
 }
 
 export class VTTIndex {
-  private starts: number[];
-  private lines: SubLine[];
+  private readonly starts: readonly number[];
 
   constructor(
     public readonly track: SubtitleTrack,
-    lines: SubLine[],
+    private readonly lines: readonly SubLine[],
   ) {
-    this.lines = lines;
     this.starts = lines.map(l => l.start.getTs());
   }
 
+  private lastHitIdx?: number;
+  private lastHitTime?: number;
+
+  private result(time: number, idx: number, res: SubLine[]) {
+    if (idx >= 0 && res.length > 0) {
+      this.lastHitIdx = idx;
+      this.lastHitTime = time;
+    }
+
+    return res;
+  }
+
   find(time: number): SubLine[] {
+    if (
+      this.lastHitIdx != null
+      && this.lastHitTime! - time < 10_000
+    ) {
+      return this.linearSearch(time, this.lastHitIdx);
+    }
+
+    return this.binarySearch(time);
+  }
+
+  private linearSearch(time: number, startIdx: number): SubLine[] {
+    const result: SubLine[] = [];
+    let firstHitIdx = -1;
+
+    let line: SubLine;
+    for (let i = startIdx; i < this.lines.length; i++) {
+      line = this.lines[i]!;
+      if (line.start.getTs() > time) break;
+      if (line.end.getTs() >= time) {
+        firstHitIdx = firstHitIdx === -1 ? i : firstHitIdx;
+        result.push(line);
+      }
+    }
+
+    return this.result(time, firstHitIdx, result);
+  }
+
+  private binarySearch(time: number): SubLine[] {
     const result: SubLine[] = [];
 
     // Binary search for closest start <= time
@@ -302,8 +340,9 @@ export class VTTIndex {
     let right = this.starts.length - 1;
     let idx = -1;
 
+    let mid: number;
     while (left <= right) {
-      const mid = (left + right) >> 1;
+      mid = (left + right) >> 1;
 
       if (this.starts[mid]! <= time) {
         idx = mid;
@@ -315,24 +354,29 @@ export class VTTIndex {
 
     if (idx === -1) return result;
 
+    let firstHitIdx = -1;
+
     // Walk backwards (handle overlaps)
+    let line: SubLine;
     for (let i = idx; i >= 0; i--) {
-      const line = this.lines[i]!;
+      line = this.lines[i]!;
       if (line.end.getTs() < time) break;
       if (line.start.getTs() <= time) {
+        firstHitIdx = i;
         result.push(line);
       }
     }
 
     // Walk forward (rare overlaps)
     for (let i = idx + 1; i < this.lines.length; i++) {
-      const line = this.lines[i]!;
+      line = this.lines[i]!;
       if (line.start.getTs() > time) break;
       if (line.end.getTs() >= time) {
+        firstHitIdx = firstHitIdx === -1 ? i : firstHitIdx;
         result.push(line);
       }
     }
 
-    return result;
+    return this.result(time, firstHitIdx, result);
   }
 }

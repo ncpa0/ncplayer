@@ -70,6 +70,7 @@
     "dprint": "^0.53.2",
     "esbuild": "^0.28.0",
     "git-hook-tasks": "git+https://github.com/ncpa0cpl/git-hook-tasks#4215793",
+    "happy-dom": "^20.9.0",
     "husky": "~8",
     "lightningcss": "^1.32.0",
     "node-os-walk": "^1.0.2",
