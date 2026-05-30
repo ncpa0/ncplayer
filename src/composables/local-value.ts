@@ -14,10 +14,10 @@ export class LocalValue<T> {
         this.value = JSON.parse(stored);
       } catch (err) {
         console.error(err);
-        this.set(initV);
+        this.value = initV;
       }
     } else {
-      this.set(initV);
+      this.value = initV;
     }
   }
 
